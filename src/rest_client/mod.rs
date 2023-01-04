@@ -2,12 +2,12 @@ use crate::rest_client::credential::Credential;
 use crate::rest_client::error::Error;
 use crate::rest_client::model::{ApiResponse, Request};
 use crate::rest_client::options::Options;
+use chrono::{SecondsFormat, Utc};
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use reqwest::{Client, ClientBuilder, Method, Url};
 use std::convert::TryInto;
 use std::str::FromStr;
 use std::time::Duration;
-use chrono::{SecondsFormat, Utc};
 
 use self::error::ApiError;
 
@@ -169,9 +169,9 @@ impl Rest {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::rest_client::model::{GetInstruments, InstrumentType};
     use serde::Serialize;
     use serde_json::Value;
-    use crate::rest_client::model::{GetInstruments, InstrumentType};
 
     #[derive(Debug, Clone, Serialize, Default)]
     pub struct GetAccountBalance {}
@@ -197,7 +197,12 @@ mod tests {
     async fn test_public_client() {
         let options = Options::default();
         let client = Rest::new(options);
-        let response = client.request(GetInstruments { inst_type: InstrumentType::Spot }).await.unwrap();
+        let response = client
+            .request(GetInstruments {
+                inst_type: InstrumentType::Spot,
+            })
+            .await
+            .unwrap();
         println!("{:#?}", response);
     }
 }

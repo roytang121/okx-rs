@@ -1,14 +1,14 @@
 use std::str::FromStr;
 
 use crate::{
-    serde_util::{deserialize_from_opt_str, deserialize_timestamp, deserialize_timestamp_opt},
     rest_client::model::Request,
+    serde_util::{deserialize_from_opt_str, deserialize_timestamp, deserialize_timestamp_opt},
 };
 use anyhow::bail;
-use rust_decimal::Decimal;
-use reqwest::Method;
-use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
+use reqwest::Method;
+use rust_decimal::Decimal;
+use serde::{Deserialize, Serialize};
 
 use super::InstrumentType;
 

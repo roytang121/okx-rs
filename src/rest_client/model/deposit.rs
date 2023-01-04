@@ -1,10 +1,10 @@
-use crate::serde_util::deserialize_timestamp;
 use crate::rest_client::model::{AccountType, Request};
+use crate::serde_util::deserialize_timestamp;
+use chrono::{DateTime, Utc};
 use reqwest::Method;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-use chrono::{DateTime, Utc};
 
 #[derive(Debug, Deserialize, Clone)]
 pub enum DepositStatus {

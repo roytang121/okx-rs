@@ -1,14 +1,14 @@
+use chrono::{DateTime, NaiveDateTime, Utc};
+use serde::de::Error;
+use serde::{de, Deserialize, Deserializer, Serializer};
 use std::fmt::Display;
 use std::str::FromStr;
-use chrono::{DateTime, NaiveDateTime, Utc};
-use serde::{de, Deserialize, Deserializer, Serializer};
-use serde::de::Error;
 
 pub fn deserialize_from_opt_str<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
-    where
-        D: Deserializer<'de>,
-        T: FromStr,
-        <T as FromStr>::Err: Display,
+where
+    D: Deserializer<'de>,
+    T: FromStr,
+    <T as FromStr>::Err: Display,
 {
     let s = String::deserialize(deserializer)?;
     match s.as_str() {
@@ -20,8 +20,8 @@ pub fn deserialize_from_opt_str<'de, D, T>(deserializer: D) -> Result<Option<T>,
 }
 
 pub fn deserialize_timestamp<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
-    where
-        D: Deserializer<'de>,
+where
+    D: Deserializer<'de>,
 {
     let s = String::deserialize(deserializer)?;
     let time_ms =
@@ -30,11 +30,9 @@ pub fn deserialize_timestamp<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D
     Ok(ndt.and_local_timezone(Utc).unwrap())
 }
 
-pub fn deserialize_timestamp_opt<'de, D>(
-    deserializer: D,
-) -> Result<Option<DateTime<Utc>>, D::Error>
-    where
-        D: Deserializer<'de>,
+pub fn deserialize_timestamp_opt<'de, D>(deserializer: D) -> Result<Option<DateTime<Utc>>, D::Error>
+where
+    D: Deserializer<'de>,
 {
     let s = String::deserialize(deserializer)?;
     match s.as_str() {
@@ -48,12 +46,9 @@ pub fn deserialize_timestamp_opt<'de, D>(
     }
 }
 
-pub fn serialize_timestamp<S>(
-    dt: &Option<DateTime<Utc>>,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
+pub fn serialize_timestamp<S>(dt: &Option<DateTime<Utc>>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
 {
     serializer.serialize_str(&dt.unwrap().timestamp_millis().to_string())
 }
@@ -84,19 +79,19 @@ macro_rules! impl_serde_from_str {
 }
 
 pub fn deserialize_from_str<'de, D, T>(deserializer: D) -> Result<T, D::Error>
-    where
-        D: Deserializer<'de>,
-        T: FromStr,
-        <T as FromStr>::Err: Display,
+where
+    D: Deserializer<'de>,
+    T: FromStr,
+    <T as FromStr>::Err: Display,
 {
     let s = String::deserialize(deserializer)?;
     FromStr::from_str(&s).map_err(de::Error::custom)
 }
 
 pub fn serialize_as_str_opt<S, T>(dt: &Option<T>, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-        T: std::fmt::Display,
+where
+    S: Serializer,
+    T: std::fmt::Display,
 {
     use serde::ser::Error;
 
@@ -108,9 +103,9 @@ pub fn serialize_as_str_opt<S, T>(dt: &Option<T>, serializer: S) -> Result<S::Ok
 }
 
 pub fn serialize_as_str<S, T>(dt: &T, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-        T: std::fmt::Display,
+where
+    S: Serializer,
+    T: std::fmt::Display,
 {
     serializer.serialize_str(&dt.to_string())
 }

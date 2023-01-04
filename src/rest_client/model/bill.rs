@@ -1,16 +1,16 @@
 //! https://www.okx.com/docs-v5/en/#rest-api-funding-get-funds-transfer-state
 
+use crate::rest_client::model::{ExecType, InstrumentType, MarginMode, Request};
 use crate::serde_util::{
     deserialize_from_opt_str, deserialize_timestamp, deserialize_timestamp_opt,
 };
-use crate::rest_client::model::{ExecType, InstrumentType, MarginMode, Request};
 use anyhow::bail;
+use chrono::{DateTime, Utc};
 use reqwest::Method;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use std::fmt::Formatter;
 use std::str::FromStr;
-use chrono::{DateTime, Utc};
 
 /// https://www.okx.com/docs-v5/en/#rest-api-funding-asset-bills-details
 #[derive(Debug, Clone, Serialize, Default)]

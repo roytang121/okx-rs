@@ -1,9 +1,9 @@
-use crate::serde_util::{deserialize_from_opt_str, deserialize_timestamp};
 use crate::rest_client::model::{InstrumentType, MarginMode, PositionSide, Request};
-use rust_decimal::Decimal;
-use reqwest::Method;
-use serde::{Deserialize, Serialize};
+use crate::serde_util::{deserialize_from_opt_str, deserialize_timestamp};
 use chrono::{DateTime, Utc};
+use reqwest::Method;
+use rust_decimal::Decimal;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]

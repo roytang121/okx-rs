@@ -1,3 +1,4 @@
+use crate::impl_serde_from_str;
 use anyhow::bail;
 use reqwest::Method;
 use serde::de::DeserializeOwned;
@@ -5,7 +6,6 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::fmt::{Debug, Display, Formatter};
 use std::str::FromStr;
-use crate::impl_serde_from_str;
 
 pub mod account;
 pub mod bill;
@@ -171,7 +171,6 @@ impl Display for MarginMode {
     }
 }
 impl_serde_from_str!(MarginMode);
-
 
 #[derive(Debug, Clone, Copy)]
 pub enum TradeMode {

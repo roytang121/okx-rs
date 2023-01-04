@@ -1,11 +1,11 @@
-use crate::serde_util::{deserialize_timestamp, serialize_timestamp};
 use crate::rest_client::model::{InstrumentType, Request, Side};
+use crate::serde_util::{deserialize_timestamp, serialize_timestamp};
 use anyhow::bail;
-use rust_decimal::Decimal;
+use chrono::{DateTime, Utc};
 use reqwest::Method;
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-use chrono::{DateTime, Utc};
 
 #[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
 pub enum ExecType {
