@@ -4,6 +4,16 @@ use serde::{de, Deserialize, Deserializer, Serializer};
 use std::fmt::Display;
 use std::str::FromStr;
 
+pub fn deserialize_from_str<'de, D, T>(deserializer: D) -> Result<T, D::Error>
+where
+    D: Deserializer<'de>,
+    T: FromStr,
+    <T as FromStr>::Err: Display,
+{
+    let s = String::deserialize(deserializer)?;
+    FromStr::from_str(&s).map_err(de::Error::custom)
+}
+
 pub fn deserialize_from_opt_str<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
 where
     D: Deserializer<'de>,
@@ -19,6 +29,7 @@ where
     }
 }
 
+/// Deserialize a string into a `DateTime<Utc>`.
 pub fn deserialize_timestamp<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
 where
     D: Deserializer<'de>,
@@ -30,6 +41,7 @@ where
     Ok(ndt.and_local_timezone(Utc).unwrap())
 }
 
+/// Deserialize a string into an `Option<DateTime<Utc>>`.
 pub fn deserialize_timestamp_opt<'de, D>(deserializer: D) -> Result<Option<DateTime<Utc>>, D::Error>
 where
     D: Deserializer<'de>,
@@ -78,14 +90,46 @@ macro_rules! impl_serde_from_str {
     };
 }
 
-pub fn deserialize_from_str<'de, D, T>(deserializer: D) -> Result<T, D::Error>
-where
-    D: Deserializer<'de>,
-    T: FromStr,
-    <T as FromStr>::Err: Display,
-{
-    let s = String::deserialize(deserializer)?;
-    FromStr::from_str(&s).map_err(de::Error::custom)
+#[macro_export]
+macro_rules! impl_string_enum {
+    ($name:ident, $($variant:tt => $variant_str:expr,)+) => {
+        impl std::fmt::Display for $name {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                match self {
+                    $(
+                        Self::$variant => write!(f, $variant_str)
+                    ),*
+                }
+            }
+        }
+
+        impl std::str::FromStr for $name {
+            type Err = anyhow::Error;
+
+            fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+                match s {
+                    $(
+                        $variant_str => { return std::result::Result::Ok(Self::$variant) }
+                    ),*
+                    other => { anyhow::bail!("unknown variant {}", other) }
+                }
+            }
+        }
+
+        impl $name {
+            #[allow(dead_code)]
+            #[inline]
+            pub const fn as_str(&self) -> &'static str {
+                match self {
+                    $(
+                        Self::$variant => $variant_str
+                    ),*
+                }
+            }
+        }
+
+        $crate::impl_serde_from_str!($name);
+    }
 }
 
 pub fn serialize_as_str_opt<S, T>(dt: &Option<T>, serializer: S) -> Result<S::Ok, S::Error>

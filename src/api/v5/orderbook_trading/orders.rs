@@ -1,7 +1,8 @@
-use crate::rest_client::model::{
-    Category, InstrumentType, OrderState, OrderType, PositionSide, QuantityType, Request, Side,
+use crate::api::v5::model::{
+    Category, InstrumentType, OrderState, OrderType, PositionSide, QuantityType, Side,
     StopLossTriggerPriceType, TakeProfitTriggerPriceType, TradeMode,
 };
+use crate::api::v5::Request;
 use crate::serde_util::{deserialize_from_opt_str, deserialize_timestamp};
 use chrono::{DateTime, Utc};
 use reqwest::Method;

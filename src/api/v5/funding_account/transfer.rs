@@ -1,7 +1,7 @@
 //! https://www.okx.com/docs-v5/en/#rest-api-funding-get-funds-transfer-state
 
+use crate::api::v5::Request;
 use crate::impl_serde_from_str;
-use crate::rest_client::model::Request;
 use crate::serde_util::deserialize_from_opt_str;
 use reqwest::Method;
 use rust_decimal::Decimal;

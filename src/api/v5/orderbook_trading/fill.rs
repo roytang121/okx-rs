@@ -1,4 +1,5 @@
-use crate::rest_client::model::{InstrumentType, Request, Side};
+use crate::api::v5::model::{InstrumentType, Side};
+use crate::api::v5::Request;
 use crate::serde_util::{deserialize_timestamp, serialize_timestamp};
 use anyhow::bail;
 use chrono::{DateTime, Utc};

@@ -1,4 +1,4 @@
-use crate::rest_client::model::Request;
+use crate::api::v5::Request;
 use crate::serde_util::{deserialize_from_opt_str, deserialize_timestamp};
 use chrono::{DateTime, Utc};
 use reqwest::Method;

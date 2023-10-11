@@ -1,4 +1,4 @@
-use crate::rest_client::model::Request;
+use crate::api::v5::Request;
 use reqwest::Method;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};

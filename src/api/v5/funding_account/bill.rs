@@ -1,6 +1,7 @@
 //! https://www.okx.com/docs-v5/en/#rest-api-funding-get-funds-transfer-state
 
-use crate::rest_client::model::{ExecType, InstrumentType, MarginMode, Request};
+use crate::api::v5::model::{InstrumentType, MarginMode};
+use crate::api::v5::{ExecType, Request};
 use crate::serde_util::{
     deserialize_from_opt_str, deserialize_timestamp, deserialize_timestamp_opt,
 };
@@ -233,7 +234,7 @@ impl Request for GetAccountBills {
 
 #[cfg(test)]
 mod tests {
-    use crate::rest_client::model::AssetBill;
+    use crate::api::v5::AssetBill;
 
     #[test]
     fn parse_bill_empty_client_id() {

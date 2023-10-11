@@ -1,4 +1,5 @@
-use crate::rest_client::model::{InstrumentType, Request, Side};
+use crate::api::v5::model::Side;
+use crate::api::v5::Request;
 use crate::serde_util::deserialize_from_str;
 use crate::serde_util::{deserialize_from_opt_str, deserialize_timestamp};
 use chrono::{DateTime, Utc};
@@ -37,68 +38,6 @@ impl Request for GetIndexPrice {
     const AUTH: bool = false;
 
     type Response = Vec<IndexTicker>;
-}
-
-/// https://www.okx.com/docs-v5/en/#rest-api-public-data-get-mark-price
-#[derive(Debug, Clone, Serialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct GetMarkPrice {
-    #[serde(
-        serialize_with = "crate::serde_util::serialize_as_str_opt",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub inst_type: Option<InstrumentType>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub inst_id: Option<String>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct MarkPrice {
-    pub inst_id: String,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub inst_type: InstrumentType,
-    #[serde(rename = "markPx")]
-    pub mark_price: Decimal,
-    #[serde(rename = "ts", deserialize_with = "deserialize_timestamp")]
-    pub timestamp: DateTime<Utc>,
-}
-
-impl Request for GetMarkPrice {
-    const METHOD: Method = Method::GET;
-    const PATH: &'static str = "/public/mark-price";
-    const AUTH: bool = false;
-
-    type Response = Vec<MarkPrice>;
-}
-
-/// https://www.okx.com/docs-v5/en/#rest-api-public-data-get-funding-rate
-#[derive(Debug, Clone, Serialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct GetFundingRate {
-    pub inst_id: String,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct FundingRate {
-    pub inst_id: String,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub inst_type: InstrumentType,
-    pub funding_rate: Decimal,
-    #[serde(deserialize_with = "deserialize_timestamp")]
-    pub funding_time: DateTime<Utc>,
-    pub next_funding_rate: Decimal,
-    #[serde(deserialize_with = "deserialize_timestamp")]
-    pub next_funding_time: DateTime<Utc>,
-}
-
-impl Request for GetFundingRate {
-    const METHOD: Method = Method::GET;
-    const PATH: &'static str = "/public/funding-rate";
-    const AUTH: bool = false;
-
-    type Response = Vec<FundingRate>;
 }
 
 /// https://www.okx.com/docs-v5/en/#rest-api-public-data-get-interest-rate-and-loan-quota
