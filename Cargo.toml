@@ -25,6 +25,7 @@ anyhow = { version = "1.0.75", features = ["backtrace"] }
 log = "0.4.20"
 tungstenite = { version = "0.20.1", features = ["native-tls"] }
 url = "2.4.1"
+crossbeam-utils = "0.8.16"
 
 [dev-dependencies]
 tokio = { version = "1.18.2", features = ["full", "time", "sync", "tracing"] }

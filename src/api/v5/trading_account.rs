@@ -26,8 +26,8 @@ impl Request for GetTradingBalances {
 #[serde(rename_all = "camelCase")]
 pub struct GetPositions {
     #[serde(
-    serialize_with = "crate::serde_util::serialize_as_str_opt",
-    skip_serializing_if = "Option::is_none"
+        serialize_with = "crate::serde_util::serialize_as_str_opt",
+        skip_serializing_if = "Option::is_none"
     )]
     pub inst_type: Option<InstrumentType>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -52,8 +52,8 @@ pub struct GetInterestAccrued {
     #[serde(skip_serializing_if = "Option::is_none")]
     before: Option<String>,
     #[serde(
-    serialize_with = "crate::serde_util::serialize_as_str_opt",
-    skip_serializing_if = "Option::is_none"
+        serialize_with = "crate::serde_util::serialize_as_str_opt",
+        skip_serializing_if = "Option::is_none"
     )]
     mgn_mode: Option<MarginMode>,
 }

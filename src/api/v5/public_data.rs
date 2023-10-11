@@ -4,6 +4,7 @@ use crate::api::v5::{FundingRate, MarkPrice, TradeMode};
 use crate::{api::v5::Request, serde_util::*};
 use chrono::{DateTime, Utc};
 use reqwest::Method;
+use rust_decimal::Decimal;
 use serde::de::{Error, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
@@ -634,11 +635,62 @@ impl Request for GetHistoryMarkPriceCandles {
     type Response = Vec<Candle>;
 }
 
+/// ## Get index components
+/// Get the index component information data on the market
+///
+/// Rate Limit: 20 requests per 2 seconds
+/// Rate limit rule: IP
+/// ## HTTP Request
+/// GET /api/v5/market/index-components
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GetIndexComponents {
+    /// Index, e.g. BTC-USD
+    pub index: String,
+}
+
+impl Request for GetIndexComponents {
+    const METHOD: Method = Method::GET;
+    const PATH: &'static str = "/market/index-components";
+    const AUTH: bool = false;
+
+    type Response = Vec<String>;
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct IndexComponent {
+    /// Index
+    pub index: String,
+    /// Latest Index Price
+    pub last: Decimal,
+    /// Data generation time, Unix timestamp format in milliseconds, e.g. 1597026383085
+    #[serde(deserialize_with = "deserialize_timestamp")]
+    pub ts: DateTime<Utc>,
+    /// Components
+    pub components: Vec<IndexComponentItem>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct IndexComponentItem {
+    /// Name of Exchange
+    pub exch: String,
+    /// Name of Exchange Trading Pairs
+    pub symbol: String,
+    /// Price of Exchange Trading Pairs
+    pub sym_px: Decimal,
+    /// Weights
+    pub wgt: Decimal,
+    /// Price converted to index
+    pub cnv_px: Decimal,
+}
+
 // Websockets
 pub mod websocket {
-    use std::time::Duration;
-    use crate::websocket::WebsocketChannel;
     use super::*;
+    use crate::websocket::WebsocketChannel;
+    use std::time::Duration;
 
     pub struct Instruments(pub InstrumentType);
     impl WebsocketChannel for Instruments {
@@ -651,15 +703,12 @@ pub mod websocket {
                       "instType": self.0,
                     }
                 ]
-            }).to_string()
+            })
+            .to_string()
         }
 
         fn unsubscribe_message(&self) -> String {
             todo!()
-        }
-
-        fn ping_interval(&self) -> Duration {
-            Duration::from_secs(10)
         }
     }
 
@@ -675,14 +724,11 @@ pub mod websocket {
                       "instId": self.0,
                     }
                 ]
-            }).to_string()
+            })
+            .to_string()
         }
 
         fn unsubscribe_message(&self) -> String {
-            todo!()
-        }
-
-        fn ping_interval(&self) -> Duration {
             todo!()
         }
     }
@@ -699,14 +745,11 @@ pub mod websocket {
                       "instId": self.0,
                     }
                 ]
-            }).to_string()
+            })
+            .to_string()
         }
 
         fn unsubscribe_message(&self) -> String {
-            todo!()
-        }
-
-        fn ping_interval(&self) -> Duration {
             todo!()
         }
     }

@@ -1,9 +1,14 @@
+use crossbeam_utils::Backoff;
 use log::info;
+use std::time::Instant;
 use std::{collections::HashMap, fmt::Debug, net::TcpStream, thread::sleep, time::Duration};
 use url::Url;
 
+use crate::websocket::Message::Ping;
 use serde::{Deserialize, Serialize};
+use tungstenite::stream::NoDelay;
 use tungstenite::{client::connect_with_config, stream::MaybeTlsStream, WebSocket};
+
 pub mod conn;
 
 #[derive(Debug)]
@@ -20,6 +25,9 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
     #[error("tungstenite websocket error: {0}")]
     Tungstenite(#[from] tungstenite::Error),
+
+    #[error("io error: {0}")]
+    Io(#[from] std::io::Error),
 
     #[error("websocket error: {0}")]
     Other(String),
@@ -64,7 +72,6 @@ pub trait WebsocketConn {
 pub trait WebsocketChannel {
     fn subscribe_message(&self) -> String;
     fn unsubscribe_message(&self) -> String;
-    fn ping_interval(&self) -> Duration;
 }
 
 pub trait WebsocketSession {
@@ -81,9 +88,27 @@ pub trait WebsocketSession {
             }
         }
 
+        let backoff = Backoff::new();
+        let mut last_ping = Instant::now();
         loop {
-            let msg = client.next();
-            handler(msg);
+            if last_ping.elapsed() > Duration::from_millis(5000) {
+                client
+                    .send("ping")
+                    .expect("unhandled ping error. probably connection closed");
+                last_ping = Instant::now();
+            }
+            match client.next() {
+                Ok(msg) => handler(Ok(msg)),
+                Err(Error::Tungstenite(tungstenite::Error::Io(err)))
+                    if matches!(err.kind(), std::io::ErrorKind::WouldBlock) =>
+                {
+                    // backoff
+                    // TODO: opt spinning for minimal latency
+                    backoff.snooze();
+                    continue;
+                }
+                Err(err) => handler(Err(err)),
+            }
         }
     }
 
@@ -114,10 +139,23 @@ pub struct OKXWebsocketClient {
 impl OKXWebsocketClient {
     pub fn new_with_sync(url: Url) -> Result<Self> {
         let socket = match connect_with_config(url, None, 3) {
-            Ok((socket, response)) => {
+            Ok((mut socket, response)) => {
                 info!("Connected to the server");
                 info!("Response HTTP code: {}", response.status());
                 info!("Response contains the following headers:");
+
+                // make nodelay
+                socket.get_mut().set_nodelay(true)?;
+                // make nonblocking
+                match socket.get_mut() {
+                    MaybeTlsStream::Plain(s) => {
+                        s.set_nonblocking(true)?;
+                    }
+                    MaybeTlsStream::NativeTls(s) => {
+                        s.get_mut().set_nonblocking(true)?;
+                    }
+                    _ => unimplemented!("tls stream type not supported yet"),
+                }
                 socket
             }
             Err(err) => {
@@ -138,10 +176,12 @@ impl WebsocketClient for OKXWebsocketClient {
     }
 
     fn next(&mut self) -> Result<Message> {
-        match self.socket.read() {
-            Ok(tungstenite::Message::Text(msg)) => Ok(Message::Data(msg)),
-            Ok(msg) => Err(Error::Other(format!("unknown message: {}", msg))),
-            Err(err) => Err(Error::Tungstenite(err)),
+        loop {
+            return match self.socket.read() {
+                Ok(tungstenite::Message::Text(msg)) => Ok(Message::Data(msg)),
+                Ok(msg) => Err(Error::Other(format!("unknown message: {}", msg))),
+                Err(err) => Err(Error::Tungstenite(err)),
+            };
         }
     }
 }
