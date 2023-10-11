@@ -9,54 +9,59 @@ okx-rs = { git = "https://github.com/roytang121/okx-rs" }
 
 <!-- extracted from https://www.okx.com/docs-v5/en/ -->
 ## V5 API Features
-- ### Trading Account
-    - [ ] REST / Get balance
-    - [ ] REST / Get positions
-    - [ ] REST / Get positions history
-    - [ ] REST / Get account and position risk
-    - [ ] REST / Get bills details (last 7 days)
-    - [ ] REST / Get bills details (last 3 months)
-    - [ ] REST / Get account configuration
-    - [ ] REST / Set position mode
-    - [ ] REST / Set leverage
-    - [ ] REST / Get maximum buy/sell amount or open amount
-    - [ ] REST / Get maximum available tradable amount
-    - [ ] REST / Increase/decrease margin
-    - [ ] REST / Get leverage
-    - [ ] REST / Get leverage estimated info
-    - [ ] REST / Get the maximum loan of instrument
-    - [ ] REST / Get fee rates
-    - [ ] REST / Get interest accrued data
-    - [ ] REST / Get interest rate
-    - [ ] REST / Set greeks (PA/BS)
-    - [ ] REST / Isolated margin trading settings
-    - [ ] REST / Get maximum withdrawals
-    - [ ] REST / Get account risk state
-    - [ ] REST / Manual borrow and repay in Quick Margin Mode
-    - [ ] REST / Get borrow and repay history in Quick Margin Mode
-    - [ ] REST / VIP loans borrow and repay
-    - [ ] REST / Get borrow and repay history for VIP loans
-    - [ ] REST / Get VIP interest accrued data
-    - [ ] REST / Get VIP interest deducted data
-    - [ ] REST / Get VIP loan order list
-    - [ ] REST / Get VIP loan order detail
-    - [ ] REST / Get borrow interest and limit
-    - [ ] REST / Position builder
-    - [ ] REST / Get Greeks
-    - [ ] REST / Get PM position limitation
-    - [ ] REST / Set risk offset type
-    - [ ] REST / Activate option
-    - [ ] REST / Set auto loan
-    - [ ] REST / Set account mode
-    - [ ] REST / Reset MMP Status
-    - [ ] REST / Set MMP
-    - [ ] REST / GET MMP Config
-    - [ ] WS / Account channel
-    - [ ] WS / Positions channel
-    - [ ] WS / Balance and position channel
-    - [ ] WS / Position risk warning
-    - [ ] WS / Account greeks channel
-- ### Orderbook Trading
+### Trading Account
+<details>
+  <summary>Progress</summary>
+
+- [ ] REST / Get balance
+- [ ] REST / Get positions
+- [ ] REST / Get positions history
+- [ ] REST / Get account and position risk
+- [ ] REST / Get bills details (last 7 days)
+- [ ] REST / Get bills details (last 3 months)
+- [ ] REST / Get account configuration
+- [ ] REST / Set position mode
+- [ ] REST / Set leverage
+- [ ] REST / Get maximum buy/sell amount or open amount
+- [ ] REST / Get maximum available tradable amount
+- [ ] REST / Increase/decrease margin
+- [ ] REST / Get leverage
+- [ ] REST / Get leverage estimated info
+- [ ] REST / Get the maximum loan of instrument
+- [ ] REST / Get fee rates
+- [ ] REST / Get interest accrued data
+- [ ] REST / Get interest rate
+- [ ] REST / Set greeks (PA/BS)
+- [ ] REST / Isolated margin trading settings
+- [ ] REST / Get maximum withdrawals
+- [ ] REST / Get account risk state
+- [ ] REST / Manual borrow and repay in Quick Margin Mode
+- [ ] REST / Get borrow and repay history in Quick Margin Mode
+- [ ] REST / VIP loans borrow and repay
+- [ ] REST / Get borrow and repay history for VIP loans
+- [ ] REST / Get VIP interest accrued data
+- [ ] REST / Get VIP interest deducted data
+- [ ] REST / Get VIP loan order list
+- [ ] REST / Get VIP loan order detail
+- [ ] REST / Get borrow interest and limit
+- [ ] REST / Position builder
+- [ ] REST / Get Greeks
+- [ ] REST / Get PM position limitation
+- [ ] REST / Set risk offset type
+- [ ] REST / Activate option
+- [ ] REST / Set auto loan
+- [ ] REST / Set account mode
+- [ ] REST / Reset MMP Status
+- [ ] REST / Set MMP
+- [ ] REST / GET MMP Config
+- [ ] WS / Account channel
+- [ ] WS / Positions channel
+- [ ] WS / Balance and position channel
+- [ ] WS / Position risk warning
+- [ ] WS / Account greeks channel
+
+</details>
+### Orderbook Trading
     - [ ] POST / Place order
     - [ ] POST / Place multiple orders
     - [ ] POST / Cancel order
@@ -202,7 +207,7 @@ okx-rs = { git = "https://github.com/roytang121/okx-rs" }
     - [x] REST / Get mark price candlesticks history
     - [ ] REST / Get oracle
     - [ ] REST / Get exchange rate
-    - [ ] REST / Get index components
+    - [x] REST / Get index components
     - [x] WS / Instruments channel
     - [ ] WS / Open interest channel
     - [ ] WS / Funding rate channel
