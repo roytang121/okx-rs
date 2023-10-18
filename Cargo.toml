@@ -24,8 +24,12 @@ rust_decimal = "1.32.0"
 anyhow = { version = "1.0.75", features = ["backtrace"] }
 log = "0.4.20"
 tungstenite = { version = "0.20.1", features = ["native-tls"] }
+tokio-tungstenite = { version = "*", features = ["native-tls"] }
 url = "2.4.1"
 crossbeam-utils = "0.8.16"
+async-trait = "0.1.73"
+futures-util = "0.3.28"
+tokio = { version = "", features = ["rt", "rt-multi-thread", "macros"] }
 
 [dev-dependencies]
 tokio = { version = "1.18.2", features = ["full", "time", "sync", "tracing"] }

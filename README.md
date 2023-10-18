@@ -228,7 +228,7 @@ okx-rs = { git = "https://github.com/roytang121/okx-rs" }
 - [x] REST / Get insurance fund
 - [ ] REST / Unit convert
 - [ ] REST / Get option tick bands
-- [ ] REST / Get index tickers
+- [x] REST / Get index tickers
 - [x] REST / Get index candlesticks
 - [x] REST / Get index candlesticks history
 - [x] REST / Get mark price candlesticks

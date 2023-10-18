@@ -688,18 +688,22 @@ pub struct IndexComponentItem {
 
 // Websockets
 pub mod websocket {
+    use crate::api::v5::ChannelArg;
     use super::*;
     use crate::websocket::WebsocketChannel;
-    use std::time::Duration;
 
     pub struct Instruments(pub InstrumentType);
     impl WebsocketChannel for Instruments {
+        const CHANNEL: &'static str = "instruments";
+        type Response<'de> = Vec<Instrument>;
+        type ArgType<'de> = ChannelArg<'de>;
+
         fn subscribe_message(&self) -> String {
             serde_json::json!({
                 "op": "subscribe",
                 "args": [
                     {
-                      "channel": "instruments",
+                      "channel": Self::CHANNEL,
                       "instType": self.0,
                     }
                 ]
@@ -715,12 +719,16 @@ pub mod websocket {
     /// MarkPrices(InstId)
     pub struct MarkPrices(pub String);
     impl WebsocketChannel for MarkPrices {
+        const CHANNEL: &'static str = "mark-price";
+        type Response<'de> = Vec<MarkPrice>;
+        type ArgType<'de> = ChannelArg<'de>;
+
         fn subscribe_message(&self) -> String {
             serde_json::json!({
                 "op": "subscribe",
                 "args": [
                     {
-                      "channel": "mark-price",
+                      "channel": Self::CHANNEL,
                       "instId": self.0,
                     }
                 ]
@@ -736,6 +744,10 @@ pub mod websocket {
     /// IndexCandles(InstId)
     pub struct IndexTickers(pub String);
     impl WebsocketChannel for IndexTickers {
+        const CHANNEL: &'static str = "index-tickers";
+        type Response<'de> = Vec<IndexTicker>;
+        type ArgType<'de> = ChannelArg<'de>;
+
         fn subscribe_message(&self) -> String {
             serde_json::json!({
                 "op": "subscribe",

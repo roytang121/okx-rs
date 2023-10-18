@@ -1,10 +1,12 @@
 use crate::impl_serde_from_str;
 use reqwest::Method;
 use serde::de::DeserializeOwned;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::borrow::Cow;
 use std::fmt::{Debug, Display};
 use std::str::FromStr;
+
+pub mod ws_convert;
 
 pub mod funding_account;
 pub mod model;
@@ -46,4 +48,15 @@ pub struct ApiResponse<T> {
     pub code: u32,
     pub msg: String,
     pub data: Option<T>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct WsResponse<'a, A, T> {
+    pub arg: A,
+    pub event: Option<&'a str>,
+    // pub data: Option<Vec<T>>,
+    // pub data: Option<&'a T>,
+    pub action: Option<&'a str>,
+    pub data: Option<T>,
+    pub msg: Option<&'a str>,
 }

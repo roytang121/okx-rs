@@ -98,6 +98,11 @@ impl_string_enum!(CandleState,
     Uncompleted => "0",
     Completed => "1",
 );
+impl_string_enum!(SelfTradePreventionMode,
+    CancelMaker => "cancel_maker",
+    CancelTaker => "cancel_taker",
+    CancelBoth => "cancel_both",
+);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InstrumentType {
@@ -229,6 +234,13 @@ pub enum DeliveryExerciseHistoryType {
 pub enum CandleState {
     Uncompleted,
     Completed,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum SelfTradePreventionMode {
+    CancelMaker,
+    CancelTaker,
+    CancelBoth,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -711,6 +723,90 @@ pub struct Candle {
     pub confirm: CandleState,
 }
 
+#[derive(Debug, Clone)]
+pub struct Level {
+    pub price: Decimal,
+    pub size: Decimal,
+    pub orders: usize,
+}
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+pub enum Levels {
+    Depth1([Level; 1]),
+    Depth5([Level; 5]),
+    Depths(Vec<Level>),
+}
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BookUpdate<'a> {
+    pub phantom: Option<&'a str>,
+    // Checksum
+    pub checksum: Option<i64>,
+    /// Sequence ID of the current message
+    pub seq_id: i64,
+    /// Sequence ID of the last sent message. Only applicable to books, books-l2-tbt, books50-l2-tbt
+    #[serde(default)]
+    pub prev_seq_id: i64,
+    /// Order book on sell side
+    // #[serde(borrow)]
+    // pub asks: [[&'a str; 4]; 5],
+    // #[serde(borrow)]
+    pub asks: Levels,
+    /// Order book on buy side
+    // #[serde(borrow)]
+    // pub bids: [[&'a str; 4]; 5],
+    // #[serde(borrow)]
+    pub bids: Levels,
+    #[serde(deserialize_with = "deserialize_timestamp")]
+    pub ts: DateTime<Utc>,
+}
+
+#[cfg(test)]
+mod test {
+    use crate::api::v5::BookUpdate;
+
+    #[test]
+    fn size_of_levels() {
+        use std::mem::size_of;
+        assert_eq!(size_of::<BookUpdate>(), 40);
+    }
+}
+
+/// Custom deserializer for book level
+/// expecting level format: [price, size, "0", orders]
+struct LevelVisitor;
+impl<'de> Visitor<'de> for LevelVisitor {
+    type Value = Level;
+
+    fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
+        formatter.write_str("level format: [price, size, \"0\", orders]")
+    }
+
+    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error> where A: SeqAccess<'de> {
+        match (
+            seq.next_element::<Decimal>()?,
+            seq.next_element::<Decimal>()?,
+            seq.next_element::<&str>()?,
+            seq.next_element::<&str>()?
+        ) {
+            (Some(price), Some(size), Some("0"), Some(n_orders)) => {
+                Ok(Level {
+                    price,
+                    size,
+                    orders: usize::from_str(n_orders).map_err(|_| A::Error::custom("unknown number of orders format"))?,
+                })
+            }
+            _ => Err(A::Error::custom("invalid level format")),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for Level {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
+        deserializer.deserialize_seq(LevelVisitor)
+    }
+}
+
 /// Custom deserializer for candlestick
 /// expecting candle format: [ts, open, high, low, close, confirm]
 struct CandleVisitor;
@@ -779,4 +875,9 @@ mod tests_parse_candle {
         assert_eq!(candle.close, "3.708".parse().unwrap());
         assert_eq!(candle.confirm, super::CandleState::Uncompleted);
     }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ChannelArg<'a> {
+    pub channel: &'a str
 }
