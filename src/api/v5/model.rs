@@ -103,6 +103,22 @@ impl_string_enum!(SelfTradePreventionMode,
     CancelTaker => "cancel_taker",
     CancelBoth => "cancel_both",
 );
+impl_string_enum!(TransferType,
+    WithinAccount => "0",
+    MasterToSubAccount => "1",
+    SubAccountToMaster => "2",
+    SubAccountToMasterSA => "3",
+    SubAccountToSubAccount => "4",
+);
+impl_string_enum!(AccountType,
+    Funding => "6",
+    Trading => "18",
+);
+impl_string_enum!(FundTransferState,
+    Success => "success",
+    Pending => "pending",
+    Failed => "failed",
+);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InstrumentType {
@@ -748,14 +764,8 @@ pub struct BookUpdate<'a> {
     #[serde(default)]
     pub prev_seq_id: i64,
     /// Order book on sell side
-    // #[serde(borrow)]
-    // pub asks: [[&'a str; 4]; 5],
-    // #[serde(borrow)]
     pub asks: Levels,
-    /// Order book on buy side
-    // #[serde(borrow)]
-    // pub bids: [[&'a str; 4]; 5],
-    // #[serde(borrow)]
+    /// Order book on bid side
     pub bids: Levels,
     #[serde(deserialize_with = "deserialize_timestamp")]
     pub ts: DateTime<Utc>,
@@ -880,4 +890,145 @@ mod tests_parse_candle {
 #[derive(Debug, Deserialize)]
 pub struct ChannelArg<'a> {
     pub channel: &'a str
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Currency {
+    /// Currency, e.g. `BTC`
+    pub ccy: String,
+    /// Name of currency. There is no related name when it is not shown.
+    pub name: String,
+    /// The logo link of currency
+    pub logo_link: Option<String>,
+    /// Chain name, e.g. `USDT-ERC20`, `USDT-TRC20`
+    pub chain: Option<String>,
+    /// The availability to deposit from chain
+    pub can_dep: bool,
+    /// The availability to withdraw to chain
+    pub can_wd: bool,
+    /// The availability to internal transfer
+    pub can_internal: bool,
+    /// The minimum deposit amount of the currency in a single transaction
+    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub min_dep: Option<Decimal>,
+    /// The minimum withdrawal amount of the currency in a single transaction
+    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub min_wd: Option<Decimal>,
+    /// The maximum amount of currency withdrawal in a single transaction
+    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub max_wd: Option<Decimal>,
+    /// The withdrawal precision, indicating the number of digits after the decimal point.
+    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub wd_tick_sz: Option<Decimal>,
+    /// The withdrawal limit in the past 24 hours (including `on-chain withdrawal` and `internal transfer`), unit in `USD`
+    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub wd_quota: Option<Decimal>,
+    /// The amount of currency withdrawal used in the past 24 hours, unit in `USD`
+    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub used_wd_quota: Option<Decimal>,
+    /// The minimum withdrawal fee for normal address
+    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub min_fee: Option<Decimal>,
+    /// The maximum withdrawal fee for normal address
+    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub max_fee: Option<Decimal>,
+    /// The minimum withdrawal fee for contract address
+    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub min_fee_for_ct_addr: Option<Decimal>,
+    /// The maximum withdrawal fee for contract address
+    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub max_fee_for_ct_addr: Option<Decimal>,
+    /// If current chain is main net, then it will return `true`, otherwise it will return `false`
+    pub main_net: bool,
+    /// Whether tag/memo information is required for withdrawal, e.g. `EOS` will return `true`
+    pub need_tag: bool,
+    /// The minimum number of blockchain confirmations to acknowledge fund deposit. The account is credited after that, but the deposit can not be withdrawn
+    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub min_dep_arrival_confirm: Option<Decimal>,
+    /// The minimum number of blockchain confirmations required for withdrawal of a deposit
+    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub min_wd_unlock_confirm: Option<Decimal>,
+    /// The fixed deposit limit, unit in `USD`
+    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub dep_quota_fixed: Option<Decimal>,
+    /// The used amount of fixed deposit quota, unit in `USD`
+    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub used_dep_quota_fixed: Option<Decimal>,
+    /// The layer2 network daily deposit limit
+    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub dep_quote_daily_layer2: Option<Decimal>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct FundingBalance {
+    /// Available balance
+    /// The balance that can be withdrawn or transferred or used for spot trading
+    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub avail_bal: Option<Decimal>,
+    /// Balance
+    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub bal: Option<Decimal>,
+    /// Frozen balance
+    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub frozen_bal: Option<Decimal>,
+    /// Currency
+    pub ccy: String,
+}
+
+/// Transfer type
+/// 0: transfer within account
+/// 1: master account to sub-account (Only applicable to API Key from master account)
+/// 2: sub-account to master account (Only applicable to API Key from master account)
+/// 3: sub-account to master account (Only applicable to APIKey from sub-account)
+/// 4: sub-account to sub-account (Only applicable to APIKey from sub-account, and target account needs to be another sub-account which belongs to same master account. Sub-account directly transfer out permission is disabled by default, set permission please refer to Set permission of transfer out)
+/// The default is 0.
+/// If you want to make transfer between sub-accounts by master account API key, refer to Master accounts manage the transfers between sub-accounts
+#[derive(Debug, Clone)]
+pub enum TransferType {
+    /// 0: transfer within account
+    WithinAccount,
+    /// 1: master account to sub-account (Only applicable to API Key from master account)
+    MasterToSubAccount,
+    /// 2: sub-account to master account (Only applicable to API Key from master account)
+    SubAccountToMaster,
+    /// 3: sub-account to master account (Only applicable to APIKey from sub-account)
+    SubAccountToMasterSA,
+    /// 4: sub-account to sub-account (Only applicable to APIKey from sub-account, and target account needs to be another sub-account which belongs to same master account. Sub-account directly transfer out permission is disabled by default, set permission please refer to Set permission of transfer out)
+    SubAccountToSubAccount,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum AccountType {
+    Funding,
+    Trading,
+}
+
+#[derive(Debug, Clone)]
+pub enum FundTransferState {
+    Success,
+    Pending,
+    Failed,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct FundTransferHistory {
+    /// Transfer ID
+    pub trans_id: String,
+    /// Client-supplied ID
+    pub client_id: String,
+    /// Currency, e.g. USDT
+    pub ccy: String,
+    /// Amount to be transferred
+    pub amt: Decimal,
+    /// Transfer type
+    pub r#type: TransferType,
+    pub from: AccountType,
+    pub to: AccountType,
+    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub sub_acct: Option<String>,
+    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
+    pub state: FundTransferState,
 }

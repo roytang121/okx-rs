@@ -164,7 +164,7 @@ okx-rs = { git = "https://github.com/roytang121/okx-rs" }
 - [ ] WS / Candlesticks channel
 - [ ] WS / Trades channel
 - [ ] WS / All trades channel
-- [ ] WS / Order book channel
+- [x] WS / Order book channel
 - [ ] WS / Option trades channel
 
 </details>
@@ -173,16 +173,16 @@ okx-rs = { git = "https://github.com/roytang121/okx-rs" }
 <details>
   <summary>Rest</summary>
 
-- [ ] REST / Get currencies
-- [ ] REST / Get balance
+- [x] REST / Get currencies
+- [x] REST / Get balance
 - [ ] REST / Get non-tradable assets
-- [ ] REST / Get account asset valuation
-- [ ] REST / Funds transfer
-- [ ] REST / Get funds transfer state
-- [ ] REST / Asset bills details
+- [x] REST / Get account asset valuation
+- [x] REST / Funds transfer
+- [x] REST / Get funds transfer state
+- [x] REST / Asset bills details
 - [ ] REST / Lightning deposits
-- [ ] REST / Get deposit address
-- [ ] REST / Get deposit history
+- [x] REST / Get deposit address
+- [x] REST / Get deposit history
 - [ ] REST / Withdrawal
 - [ ] REST / Lightning withdrawals
 - [ ] REST / Cancel withdrawal

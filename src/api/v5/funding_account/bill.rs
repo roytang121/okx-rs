@@ -12,62 +12,385 @@ use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use std::fmt::Formatter;
 use std::str::FromStr;
+use crate::impl_string_enum;
 
-/// https://www.okx.com/docs-v5/en/#rest-api-funding-asset-bills-details
-#[derive(Debug, Clone, Serialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct GetAssetBills {}
-
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Clone)]
 pub enum AssetBillType {
     Deposit,
     Withdrawal,
     CanceledWithdrawal,
     TransferToSubAccount,
     TransferFromSubAccount,
+    TransferOutFromSubToMasterAccount,
+    TransferInFromMasterToSubAccount,
+    ManuallyClaimedAirdrop,
+    SystemReversal,
+    EventReward,
+    EventGiveaway,
+    ReceivedFromAppointments,
+    DeductedFromAppointments,
+    RedPacketSent,
+    RedPacketSnatched,
+    RedPacketRefunded,
+    Conversion,
+    ClaimRebateCard,
+    DistributeRebateCard,
+    TokenReceived,
+    TokenGivenAway,
+    TokenRefunded,
+    SubscriptionToSavings,
+    RedemptionToSavings,
+    Distribute,
+    LockUp,
+    NodeVoting,
+    DeFiStackingPurchase,
+    VoteRedemption,
+    DeFiStackingRedemption,
+    StakingYield,
+    ViolationFee,
+    PoWMiningYield,
+    CloudMiningPay,
+    CloudMiningYield,
+    Subsidy,
+    DeFiYield,
+    AddCollateral,
+    RedeemCollateral,
+    Investment,
+    BorrowerBorrows,
+    PrincipalTransferredIn,
+    BorrowerTransferredLoanOut,
+    BorrowerTransferredInterestOut,
+    InvestorTransferredInterestIn,
+    PrepaymentPenaltyTransferredIn,
+    PrepaymentPenaltyTransferredOut,
+    MortgageFeeTransferredIn,
+    MortgageFeeTransferredOut,
+    OverdueFeeTransferredIn,
+    OverdueFeeTransferredOut,
+    OverdueInterestTransferredOut,
+    OverdueInterestTransferredIn,
+    CollateralForClosedPositionTransferredIn,
+    CollateralForClosedPositionTransferredOut,
+    CollateralForLiquidationTransferredIn,
+    CollateralForLiquidationTransferredOut,
+    InsuranceFundTransferredIn,
+    InsuranceFundTransferredOut,
+    PlaceAnOrder,
+    FulfillAnOrder,
+    CancelAnOrder,
+    MerchantsUnlockDeposit,
+    MerchantsAddDeposit,
+    FiatGatewayPlaceAnOrder,
+    FiatGatewayCancelAnOrder,
+    FiatGatewayFulfillAnOrder,
+    JumpstartUnlocking,
+    ManualDeposit,
+    InterestDeposit,
+    InvestmentFeeTransferredIn,
+    InvestmentFeeTransferredOut,
+    RewardsTransferredIn,
     TransferFromTradingAccount,
     TransferToTradingAccount,
-    Other(String),
+    FrozenByCustomerService,
+    UnfrozenByCustomerService,
+    TransferredByCustomerService,
+    CrossChainExchange,
+    Convert,
+    ETH20Subscription,
+    ETH20Swapping,
+    ETH20Earnings,
+    SystemReverse,
+    TransferOutOfUnifiedAccountReserve,
+    RewardExpired,
+    CustomerFeedback,
+    VestedSushiRewards,
+    AffiliateCommission,
+    ReferralReward,
+    BrokerReward,
+    JoinerReward,
+    MysteryBoxReward,
+    RewardsWithdraw,
+    FeeRebate,
+    CollectedCrypto,
+    DualInvestmentSubscribe,
+    DualInvestmentCollection,
+    DualInvestmentProfit,
+    DualInvestmentRefund,
+    NewYearRewards,
+    SubAffiliateCommission,
+    Pay,
+    LockedCollateral,
+    Loan,
+    AddedCollateral,
+    ReturnedCollateral,
+    Repayment,
+    UnlockedCollateral,
+    AirdropPayment,
+    FeedbackBounty,
+    InviteFriendsRewards,
+    DivideTheRewardPool,
+    BrokerConvertReward,
+    FreeETH,
+    ConvertTransfer,
+    SlotAuctionConversion,
+    MysteryBoxBonus,
+    CardPaymentBuy,
+    UntradableAssetWithdrawal,
+    UntradableAssetWithdrawalRevoked,
+    UntradableAssetDeposit,
+    UntradableAssetCollectionReduce,
+    UntradableAssetCollectionIncrease,
+    Buy,
+    PriceLockSubscribe,
+    PriceLockCollection,
+    PriceLockProfit,
+    PriceLockRefund,
+    DualInvestmentLiteSubscribe,
+    DualInvestmentLiteCollection,
+    DualInvestmentLiteProfit,
+    DualInvestmentLiteRefund,
+    WinCryptoWithSatoshi,
+    MultiCollateralLoanCollateralLocked,
+    CollateralTransferedOutFromUserAccount,
+    CollateralReturnedToUsers,
+    MultiCollateralLoanCollateralReleased,
+    LoanTransferredToUsersAccount,
+    MultiCollateralLoanBorrowed,
+    MultiCollateralLoanRepaid,
+    RepaymentTransferredFromUsersAccount,
+    DelistedCrypto,
+    BlockchainsWithdrawalFee,
+    WithdrawalFeeRefund,
+    CopyTradingProfitShare,
+    ServiceFee,
+    SharkFinSubscribe,
+    SharkFinCollection,
+    SharkFinProfit,
+    SharkFinRefund,
+    Airdrop,
+    TokenMigrationCompleted,
+    SubsidizedInterestReceived,
+    BrokerRebateCompensation,
+    StrategyBotsProfitShare,
+    DCDBrokerTransfer,
+    DCDBrokerRebate,
+    TransferOutTradingSubAccount,
+    TransferInTradingSubAccount,
+    TransferOutCustodyFundingAccount,
+    TransferInCustodyFundingAccount,
+    CustodyFundDelegation,
+    CustodyFundUndelegation,
 }
 
-impl FromStr for AssetBillType {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(match s {
-            "0" => Self::Deposit,
-            "1" => Self::Withdrawal,
-            "2" => Self::CanceledWithdrawal,
-            "20" => Self::TransferToSubAccount,
-            "21" => Self::TransferFromSubAccount,
-            "130" => Self::TransferFromTradingAccount,
-            "131" => Self::TransferToTradingAccount,
-            unknown => Self::Other(unknown.to_owned()),
-        })
-    }
-}
+impl_string_enum!(AssetBillType,
+    Deposit => "1",
+    Withdrawal => "2",
+    CanceledWithdrawal => "13",
+    TransferToSubAccount => "20",
+    TransferFromSubAccount => "21",
+    TransferOutFromSubToMasterAccount => "22",
+    TransferInFromMasterToSubAccount => "23",
+    ManuallyClaimedAirdrop => "28",
+    SystemReversal => "47",
+    EventReward => "48",
+    EventGiveaway => "49",
+    ReceivedFromAppointments => "50",
+    DeductedFromAppointments => "51",
+    RedPacketSent => "52",
+    RedPacketSnatched => "53",
+    RedPacketRefunded => "54",
+    Conversion => "61",
+    ClaimRebateCard => "68",
+    DistributeRebateCard => "69",
+    TokenReceived => "72",
+    TokenGivenAway => "73",
+    TokenRefunded => "74",
+    SubscriptionToSavings => "75",
+    RedemptionToSavings => "76",
+    Distribute => "77",
+    LockUp => "78",
+    NodeVoting => "79",
+    DeFiStackingPurchase => "80",
+    VoteRedemption => "81",
+    DeFiStackingRedemption => "82",
+    StakingYield => "83",
+    ViolationFee => "84",
+    PoWMiningYield => "85",
+    CloudMiningPay => "86",
+    CloudMiningYield => "87",
+    Subsidy => "88",
+    DeFiYield => "89",
+    AddCollateral => "92",
+    RedeemCollateral => "93",
+    Investment => "94",
+    BorrowerBorrows => "95",
+    PrincipalTransferredIn => "96",
+    BorrowerTransferredLoanOut => "97",
+    BorrowerTransferredInterestOut => "98",
+    InvestorTransferredInterestIn => "99",
+    PrepaymentPenaltyTransferredIn => "102",
+    PrepaymentPenaltyTransferredOut => "103",
+    MortgageFeeTransferredIn => "104",
+    MortgageFeeTransferredOut => "105",
+    OverdueFeeTransferredIn => "106",
+    OverdueFeeTransferredOut => "107",
+    OverdueInterestTransferredOut => "108",
+    OverdueInterestTransferredIn => "109",
+    CollateralForClosedPositionTransferredIn => "110",
+    CollateralForClosedPositionTransferredOut => "111",
+    CollateralForLiquidationTransferredIn => "112",
+    CollateralForLiquidationTransferredOut => "113",
+    InsuranceFundTransferredIn => "114",
+    InsuranceFundTransferredOut => "115",
+    PlaceAnOrder => "116",
+    FulfillAnOrder => "117",
+    CancelAnOrder => "118",
+    MerchantsUnlockDeposit => "119",
+    MerchantsAddDeposit => "120",
+    FiatGatewayPlaceAnOrder => "121",
+    FiatGatewayCancelAnOrder => "122",
+    FiatGatewayFulfillAnOrder => "123",
+    JumpstartUnlocking => "124",
+    ManualDeposit => "125",
+    InterestDeposit => "126",
+    InvestmentFeeTransferredIn => "127",
+    InvestmentFeeTransferredOut => "128",
+    RewardsTransferredIn => "129",
+    TransferFromTradingAccount => "130",
+    TransferToTradingAccount => "131",
+    FrozenByCustomerService => "132",
+    UnfrozenByCustomerService => "133",
+    TransferredByCustomerService => "134",
+    CrossChainExchange => "135",
+    Convert => "136",
+    ETH20Subscription => "137",
+    ETH20Swapping => "138",
+    ETH20Earnings => "139",
+    SystemReverse => "143",
+    TransferOutOfUnifiedAccountReserve => "144",
+    RewardExpired => "145",
+    CustomerFeedback => "146",
+    VestedSushiRewards => "147",
+    AffiliateCommission => "150",
+    ReferralReward => "151",
+    BrokerReward => "152",
+    JoinerReward => "153",
+    MysteryBoxReward => "154",
+    RewardsWithdraw => "155",
+    FeeRebate => "156",
+    CollectedCrypto => "157",
+    DualInvestmentSubscribe => "160",
+    DualInvestmentCollection => "161",
+    DualInvestmentProfit => "162",
+    DualInvestmentRefund => "163",
+    NewYearRewards => "169",
+    SubAffiliateCommission => "172",
+    Pay => "174",
+    LockedCollateral => "175",
+    Loan => "176",
+    AddedCollateral => "177",
+    ReturnedCollateral => "178",
+    Repayment => "179",
+    UnlockedCollateral => "180",
+    AirdropPayment => "181",
+    FeedbackBounty => "182",
+    InviteFriendsRewards => "183",
+    DivideTheRewardPool => "184",
+    BrokerConvertReward => "185",
+    FreeETH => "186",
+    ConvertTransfer => "187",
+    SlotAuctionConversion => "188",
+    MysteryBoxBonus => "189",
+    CardPaymentBuy => "193",
+    UntradableAssetWithdrawal => "195",
+    UntradableAssetWithdrawalRevoked => "196",
+    UntradableAssetDeposit => "197",
+    UntradableAssetCollectionReduce => "198",
+    UntradableAssetCollectionIncrease => "199",
+    Buy => "200",
+    PriceLockSubscribe => "202",
+    PriceLockCollection => "203",
+    PriceLockProfit => "204",
+    PriceLockRefund => "205",
+    DualInvestmentLiteSubscribe => "207",
+    DualInvestmentLiteCollection => "208",
+    DualInvestmentLiteProfit => "209",
+    DualInvestmentLiteRefund => "210",
+    WinCryptoWithSatoshi => "211",
+    MultiCollateralLoanCollateralLocked => "212",
+    CollateralTransferedOutFromUserAccount => "213",
+    CollateralReturnedToUsers => "214",
+    MultiCollateralLoanCollateralReleased => "215",
+    LoanTransferredToUsersAccount => "216",
+    MultiCollateralLoanBorrowed => "217",
+    MultiCollateralLoanRepaid => "218",
+    RepaymentTransferredFromUsersAccount => "219",
+    DelistedCrypto => "220",
+    BlockchainsWithdrawalFee => "221",
+    WithdrawalFeeRefund => "222",
+    CopyTradingProfitShare => "223",
+    ServiceFee => "224",
+    SharkFinSubscribe => "225",
+    SharkFinCollection => "226",
+    SharkFinProfit => "227",
+    SharkFinRefund => "228",
+    Airdrop => "229",
+    TokenMigrationCompleted => "230",
+    SubsidizedInterestReceived => "232",
+    BrokerRebateCompensation => "233",
+    StrategyBotsProfitShare => "263",
+    DCDBrokerTransfer => "270",
+    DCDBrokerRebate => "271",
+    TransferOutTradingSubAccount => "284",
+    TransferInTradingSubAccount => "285",
+    TransferOutCustodyFundingAccount => "286",
+    TransferInCustodyFundingAccount => "287",
+    CustodyFundDelegation => "288",
+    CustodyFundUndelegation => "289",
+);
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct AssetBill {
+    /// Bill ID
     pub bill_id: String,
+    /// Account balance currency
     pub ccy: String,
+    /// Client-supplied ID for transfer or withdrawal
     #[serde(deserialize_with = "deserialize_from_opt_str")]
     pub client_id: Option<String>,
-    pub bal_chg: Decimal,
-    pub bal: Decimal,
+    /// Change in balance at the account level
+    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub bal_chg: Option<Decimal>,
+    /// Balance at the account level
+    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub bal: Option<Decimal>,
+    /// Bill type
     #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
     pub r#type: AssetBillType,
+    /// Creation time, Unix timestamp format in milliseconds, e.g.1597026383085
     #[serde(default, deserialize_with = "deserialize_timestamp_opt")]
     pub ts: Option<DateTime<Utc>>,
 }
 
-impl Request for GetAssetBills {
-    const METHOD: Method = Method::GET;
-    const PATH: &'static str = "/asset/bills";
-    const AUTH: bool = true;
+// gen test for get_asset_bills
+#[cfg(test)]
+mod test_get_asset_bills {
+    use crate::api::v5::funding_account::GetAssetBills;
+    use crate::api::v5::testkit::test_with_credentials;
 
-    type Response = Vec<AssetBill>;
+    #[tokio::test]
+    async fn get_asset_bills() {
+        test_with_credentials(|client| async move {
+            let resp = client
+                .request(GetAssetBills::default())
+                .await
+                .expect("get asset bills");
+            println!("{:?}", resp);
+            assert!(!resp.is_empty());
+        })
+        .await;
+    }
 }
 
 /// https://www.okx.com/docs-v5/en/#rest-api-subaccount-history-of-sub-account-transfer
@@ -206,50 +529,5 @@ impl std::fmt::Display for AccountBillSubType {
             AccountBillSubType::FundingFeeExpense => write!(f, "173"),
             AccountBillSubType::FundingFeeIncome => write!(f, "174"),
         }
-    }
-}
-
-/// https://www.okx.com/docs-v5/en/#rest-api-account-get-bills-details-last-7-days
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct GetAccountBills {
-    #[serde(
-        skip_serializing_if = "Option::is_none",
-        serialize_with = "crate::serde_util::serialize_as_str_opt"
-    )]
-    pub r#type: Option<AccountBillType>,
-    #[serde(
-        skip_serializing_if = "Option::is_none",
-        serialize_with = "crate::serde_util::serialize_as_str_opt"
-    )]
-    pub sub_type: Option<AccountBillSubType>,
-}
-
-impl Request for GetAccountBills {
-    const METHOD: Method = Method::GET;
-    const PATH: &'static str = "/account/bills";
-    const AUTH: bool = true;
-    type Response = Vec<AccountBill>;
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::api::v5::AssetBill;
-
-    #[test]
-    fn parse_bill_empty_client_id() {
-        let json = r#"
-        {
-            "billId": "12344",
-            "ccy": "BTC",
-            "clientId": "",
-            "balChg": "2",
-            "bal": "12",
-            "type": "1",
-            "ts": "1597026383085"
-        }
-        "#;
-        let bill = serde_json::from_str::<AssetBill>(json).unwrap();
-        assert!(bill.client_id.is_none());
     }
 }

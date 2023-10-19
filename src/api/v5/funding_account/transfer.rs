@@ -1,119 +1,37 @@
 //! https://www.okx.com/docs-v5/en/#rest-api-funding-get-funds-transfer-state
 
 use crate::api::v5::Request;
-use crate::impl_serde_from_str;
 use crate::serde_util::deserialize_from_opt_str;
 use reqwest::Method;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter};
+use std::fmt::Display;
 use std::str::FromStr;
+use crate::api::v5::model::{AccountType, FundTransferHistory, TransferType};
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum TransferType {
-    WithinAccount,
-    MasterToSubAccount,
-    SubAccountToMaster,
-    SubAccountToSubAccount,
-}
-impl FromStr for TransferType {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(match s {
-            "0" => Self::WithinAccount,
-            "1" => Self::MasterToSubAccount,
-            // sub account to master (api key from master account)
-            "2" => Self::SubAccountToMaster,
-            // "3" is sub account to master (api key from sub account)
-            // although sub-account to sub-account is documented from api doc, it is not
-            // possible to perform such kind of transfer on OKx GUI
-            // and it is also not possible to reconcile funds transfer between sub-account
-            "4" => Self::SubAccountToSubAccount,
-            unknown => anyhow::bail!("unknown Fund transfer type {}", unknown),
-        })
-    }
-}
-impl Display for TransferType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            TransferType::WithinAccount => write!(f, "0"),
-            TransferType::MasterToSubAccount => write!(f, "1"),
-            TransferType::SubAccountToMaster => write!(f, "2"),
-            TransferType::SubAccountToSubAccount => write!(f, "4"),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub enum AccountType {
-    Funding,
-    Trading,
-}
-impl FromStr for AccountType {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(match s {
-            "6" => Self::Funding,
-            "18" => Self::Trading,
-            unknown => anyhow::bail!("unknown account type {}", unknown),
-        })
-    }
-}
-impl Display for AccountType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            AccountType::Funding => write!(f, "6"),
-            AccountType::Trading => write!(f, "18"),
-        }
-    }
-}
-impl_serde_from_str!(AccountType);
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum FundTransferState {
-    Success,
-    Pending,
-    Failed,
-}
-impl FromStr for FundTransferState {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(match s {
-            "success" => Self::Success,
-            "pending" => Self::Pending,
-            "failed" => Self::Failed,
-            unknown => anyhow::bail!("unknown Fund transfer state {}", unknown),
-        })
-    }
-}
-
-#[derive(Debug, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct FundTransferHistory {
-    pub trans_id: String,
-    pub client_id: String,
-    pub ccy: String,
-    pub amt: Decimal,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub r#type: TransferType,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub from: AccountType,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub to: AccountType,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub sub_acct: Option<String>,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub state: FundTransferState,
-}
-
-/// https://www.okx.com/docs-v5/en/#rest-api-funding-get-funds-transfer-state
+/// https://www.okx.com/docs-v5/en/#funding-account-rest-api-get-funds-transfer-state
+/// ## Get funds transfer state
+/// Retrieve the transfer state data of the last 2 weeks.
+///
+/// Rate Limit: 1 request per second
+/// Rate limit rule: UserID
+/// ## HTTP Request
+/// GET /api/v5/asset/transfer-state
 #[derive(Debug, Clone, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct GetFundTransferHistory {
-    pub trans_id: String,
+    /// Transfer ID
+    /// Either transId or clientId is required. If both are passed, transId will be used.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub trans_id: Option<String>,
+    /// Client-supplied ID
+    /// A combination of case-sensitive alphanumerics, all numbers, or all letters of up to 32 characters.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub client_id: Option<String>,
+    /// Transfer type
+    /// The default is WithinAccount
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub r#type: Option<TransferType>,
 }
 
 impl Request for GetFundTransferHistory {
@@ -138,55 +56,49 @@ pub struct FundTransferResponse {
     pub to: AccountType,
 }
 
-/// https://www.okx.com/docs-v5/en/#rest-api-funding-funds-transfer
+/// https://www.okx.com/docs-v5/en/#funding-account-rest-api-funds-transfer
+/// ## Funds transfer
+/// Only API keys with Trade privilege can call this endpoint.
+///
+/// This endpoint supports the transfer of funds between your funding account and trading account, and from the master account to sub-accounts.
+///
+/// Sub-account can transfer out to master account by default. Need to call Set permission of transfer out to grant privilege first if you want sub-account transferring to another sub-account (sub-accounts need to belong to same master account.)
+///
+/// **Failure of the request does not mean the transfer has failed. Recommend to call "Get funds transfer state" to confirm the status.**
+///
+/// Rate Limit: 1 request per second
+/// Rate limit rule: UserID + Currency
+/// ## HTTP Request
+/// POST /api/v5/asset/transfer
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct FundTransferRequest {
+pub struct FundsTransfer {
+    /// Transfer type
+    pub r#type: TransferType,
+    /// Transfer currency, e.g. USDT
     pub ccy: String,
+    /// Amount to be transferred
     pub amt: Decimal,
+    /// The remitting account
     #[serde(serialize_with = "crate::serde_util::serialize_as_str")]
     pub from: AccountType,
+    /// The beneficiary account
     #[serde(serialize_with = "crate::serde_util::serialize_as_str")]
     pub to: AccountType,
+    /// Name of the sub-account
+    /// When type is 1/2/4, this parameter is required.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sub_acct: Option<String>,
-    #[serde(serialize_with = "crate::serde_util::serialize_as_str")]
-    pub r#type: TransferType,
+    /// Client-supplied ID
+    /// A combination of case-sensitive alphanumerics, all numbers, or all letters of up to 32 characters.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub client_id: Option<String>,
 }
 
-impl Request for FundTransferRequest {
+impl Request for FundsTransfer {
     const METHOD: Method = Method::POST;
     const PATH: &'static str = "/asset/transfer";
     const AUTH: bool = true;
 
     type Response = Vec<FundTransferResponse>;
-}
-
-#[derive(Debug, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct FundingBalance {
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub avail_bal: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub bal: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub frozen_bal: Option<Decimal>,
-    pub ccy: String,
-}
-
-/// https://www.okx.com/docs-v5/en/#rest-api-account-get-balance
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct GetFundingBalances {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub ccy: Option<String>,
-}
-
-impl Request for GetFundingBalances {
-    const METHOD: Method = Method::GET;
-    const PATH: &'static str = "/asset/balances";
-    const AUTH: bool = true;
-    type Response = Vec<FundingBalance>;
 }

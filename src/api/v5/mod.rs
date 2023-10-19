@@ -1,4 +1,3 @@
-use crate::impl_serde_from_str;
 use reqwest::Method;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Deserializer, Serialize};
@@ -14,10 +13,12 @@ pub mod orderbook_trading;
 pub mod public_data;
 pub mod trading_account;
 
+#[cfg(test)]
+pub mod testkit;
+
 pub use self::model::*;
 // re-export funding_account module
 pub use self::funding_account::bill::*;
-pub use self::funding_account::currencies::*;
 pub use self::funding_account::deposit::*;
 pub use self::funding_account::transfer::*;
 pub use self::funding_account::withdrawal::*;

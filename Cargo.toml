@@ -29,7 +29,8 @@ url = "2.4.1"
 crossbeam-utils = "0.8.16"
 async-trait = "0.1.73"
 futures-util = "0.3.28"
-tokio = { version = "", features = ["rt", "rt-multi-thread", "macros"] }
+tokio = { version = "1.0.0", features = ["rt", "rt-multi-thread", "macros"] }
 
 [dev-dependencies]
+dotenv = "0.15.0"
 tokio = { version = "1.18.2", features = ["full", "time", "sync", "tracing"] }
