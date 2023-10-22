@@ -35,18 +35,3 @@ where
         .await;
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::api::v5::funding_account::GetCurrencies;
-
-    #[tokio::test]
-    async fn test_read_env_creds() {
-        with_env_private_client(|rest| async move {
-            let rval = rest.request(GetCurrencies::default()).await.unwrap();
-            assert!(!rval.is_empty())
-        })
-        .await;
-    }
-}
