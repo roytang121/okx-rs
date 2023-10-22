@@ -383,6 +383,7 @@ mod tests_get_asset_bills {
     use crate::api::v5::testkit::with_env_private_client;
 
     #[tokio::test]
+    #[ignore]
     async fn test_deser() {
         with_env_private_client(|client| async move {
             let resp = client

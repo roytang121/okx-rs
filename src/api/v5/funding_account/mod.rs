@@ -42,6 +42,7 @@ mod tests {
     use crate::api::v5::testkit::with_env_private_client;
 
     #[tokio::test]
+    #[ignore]
     async fn get_currencies() {
         with_env_private_client(|client| async move {
             let resp = client
