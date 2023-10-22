@@ -6,6 +6,7 @@ use serde::de::{Error, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
+use crate::api::v5::DepositStatus;
 
 impl_string_enum!(InstrumentType,
     Spot => "SPOT",
@@ -300,7 +301,7 @@ pub struct Instrument {
     pub contract_type: Option<ContractType>, // Only applicable to FUTURES/SWAP
     #[serde(rename = "alias", deserialize_with = "deserialize_from_opt_str")]
     pub future_type: Option<FutureType>, // Only applicable to FUTURES
-    #[serde(rename = "state", deserialize_with = "deserialize_from_str")]
+    #[serde(rename = "state")]
     pub status: InstrumentStatus,
     #[serde(rename = "maxLmtSz")]
     pub max_lmt_size: Decimal, // The maximum order quantity of the contract or spot limit order
@@ -336,120 +337,323 @@ pub struct DeliveryExerciseHistoryDetail {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TradingBalanceDetail {
+    /// Update time of account information, millisecond format of Unix timestamp, e.g. 1597026383085
     #[serde(deserialize_with = "deserialize_timestamp")]
     pub u_time: DateTime<Utc>,
+    /// The total amount of equity in USD
     #[serde(deserialize_with = "deserialize_from_opt_str")]
     pub total_eq: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    /// Isolated margin equity in USD
+    // Applicable to Single-currency margin and Multi-currency margin and Portfolio margin
+    #[serde(default = "none", deserialize_with = "deserialize_from_opt_str")]
     pub iso_eq: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    /// Adjusted / Effective equity in USD
+    /// The net fiat value of the assets in the account that can provide margins for spot, futures, perpetual swap and options under the cross margin mode.
+    /// Cause in multi-ccy or PM mode, the asset and margin requirement will all be converted to USD value to process the order check or liquidation.
+    /// Due to the volatility of each currency market, our platform calculates the actual USD value of each currency based on discount rates to balance market risks.
+    /// Applicable to Multi-currency margin and Portfolio margin
+    #[serde(default = "none", deserialize_with = "deserialize_from_opt_str")]
     pub adj_eq: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    /// Cross margin frozen for pending orders in USD
+    /// Only applicable to Multi-currency margin
+    #[serde(default = "none", deserialize_with = "deserialize_from_opt_str")]
     pub ord_froz: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    /// Initial margin requirement in USD
+    /// The sum of initial margins of all open positions and pending orders under cross margin mode in USD.
+    /// Applicable to Multi-currency margin and Portfolio margin
+    #[serde(default = "none", deserialize_with = "deserialize_from_opt_str")]
     pub imr: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    /// Maintenance margin requirement in USD
+    /// The sum of maintenance margins of all open positions under cross margin mode in USD.
+    /// Applicable to Multi-currency margin and Portfolio margin
+    #[serde(default = "none", deserialize_with = "deserialize_from_opt_str")]
     pub mmr: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    /// Potential borrowing IMR of the account in USD
+    /// Only applicable to Multi-currency margin and Portfolio margin. It is "" for other margin modes.
+    #[serde(default = "none", deserialize_with = "deserialize_from_opt_str")]
+    pub borrow_froz: Option<Decimal>,
+    /// Margin ratio in USD
+    /// The index for measuring the risk of a certain asset in the account.
+    /// Applicable to Multi-currency margin and Portfolio margin
+    #[serde(default = "none", deserialize_with = "deserialize_from_opt_str")]
     pub mgn_ratio: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    /// Notional value of positions in USD
+    /// Applicable to Multi-currency margin and Portfolio margin
+    #[serde(default = "none", deserialize_with = "deserialize_from_opt_str")]
     pub notional_usd: Option<Decimal>,
+    /// Detailed asset information in all currencies
     pub details: Vec<TradingBalance>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TradingBalance {
-    /// Available balance of the currency
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
-    pub avail_bal: Option<Decimal>,
     /// Cash Balance
     #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub cash_bal: Option<Decimal>,
     /// Equity of the currency
     #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub eq: Option<Decimal>,
-    /// Margin ratio in USD
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
-    pub mgn_ratio: Option<Decimal>,
     /// Currency
     pub ccy: String,
+    #[serde(deserialize_with = "deserialize_timestamp")]
+    pub u_time: DateTime<Utc>,
+    /// Isolated margin equity of the currency
+    /// Applicable to Single-currency margin and Multi-currency margin and Portfolio margin
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub iso_eq: Option<Decimal>,
+    /// Available equity of the currency
+    /// The balance that can be used on margin or futures/swap trading.
+    /// Applicable to Single-currency margin, Multi-currency margin and Portfolio margin
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub avail_eq: Option<Decimal>,
+    /// Discount equity of the currency in USD.
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub dis_eq: Option<Decimal>,
+    /// Frozen balance
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub fixed_bal: Option<Decimal>,
+    /// Available balance of the currency
+    /// The balance that can be withdrawn or transferred or used on spot trading.
+    /// Applicable to Simple, Single-currency margin, Multi-currency margin and Portfolio margin
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub avail_bal: Option<Decimal>,
+    /// Frozen balance of the currency
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub frozen_bal: Option<Decimal>,
+    /// Margin frozen for open orders
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub ord_frozen: Option<Decimal>,
+    /// Liabilities of the currency
+    /// It is a positive value, e.g."21625.64". Applicable to Multi-currency margin and Portfolio margin
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub liab: Option<Decimal>,
+    /// The sum of the unrealized profit & loss of all margin and derivatives positions of the currency.
+    /// Applicable to Single-currency margin, Multi-currency margin and Portfolio margin
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub upl: Option<Decimal>,
+    /// Liabilities due to Unrealized loss of the currency
+    /// Applicable to Multi-currency margin and Portfolio margin
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub upl_liab: Option<Decimal>,
+    /// Cross liabilities of the currency
+    /// Applicable to Multi-currency margin and Portfolio margin
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub cross_liab: Option<Decimal>,
+    /// Isolated liabilities of the currency
+    /// Applicable to Multi-currency margin and Portfolio margin
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub iso_liab: Option<Decimal>,
+    /// Isolated liabilities of the currency
+    /// Applicable to Multi-currency margin and Portfolio margin
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub mgn_ratio: Option<Decimal>,
+    /// Accrued interest of the currency
+    /// It is a positive value, e.g."9.01". Applicable to Multi-currency margin and Portfolio margin
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub interest: Option<Decimal>,
+    /// Risk indicator of auto liability repayment
+    /// Divided into multiple levels from 0 to 5, the larger the number, the more likely the auto repayment will be triggered.
+    /// Applicable to Multi-currency margin and Portfolio margin and Portfolio margin
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub twap: Option<Decimal>,
+    /// Max loan of the currency
+    /// Applicable to cross of Multi-currency margin and Portfolio margin
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub max_loan: Option<Decimal>,
+    /// Equity in USD of the currency
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub eq_usd: Option<Decimal>,
+    /// Potential borrowing IMR of the currency in USD
+    /// Only applicable to Multi-currency margin and Portfolio margin. It is "" for other margin modes.
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub borrow_froz: Option<Decimal>,
+    /// Leverage of the currency
+    /// Applicable to Single-currency margin
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub notional_level: Option<Decimal>,
+    /// Strategy equity
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub stgy_eq: Option<Decimal>,
+    /// Isolated unrealized profit and loss of the currency
+    /// Applicable to Single-currency margin and Multi-currency margin and Portfolio margin
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub iso_upl: Option<Decimal>,
+    /// Spot in use amount
+    /// Applicable to Portfolio margin
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub spot_in_use_amt: Option<Decimal>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PositionDetail {
-    pub adl: String,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub avail_pos: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub avg_px: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_timestamp")]
-    pub c_time: DateTime<Utc>,
-    pub ccy: String,
-    // #[serde(deserialize_with = "deserialize_from_opt_str")]
-    // pub delta_bs: Option<Decimal>,
-    // #[serde(deserialize_with = "deserialize_from_opt_str")]
-    // pub delta_pa: Option<Decimal>,
-    // #[serde(deserialize_with = "deserialize_from_opt_str")]
-    // pub gamma_bs: Option<Decimal>,
-    // #[serde(deserialize_with = "deserialize_from_opt_str")]
-    // pub gamma_pa: Option<Decimal>,
-    // #[serde(deserialize_with = "deserialize_from_opt_str")]
-    // pub theta_bs: Option<Decimal>,
-    // #[serde(deserialize_with = "deserialize_from_opt_str")]
-    // pub theta_pa: Option<Decimal>,
-    // #[serde(deserialize_with = "deserialize_from_opt_str")]
-    // pub vega_bs: Option<Decimal>,
-    // #[serde(deserialize_with = "deserialize_from_opt_str")]
-    // pub vega_pa: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub imr: Option<Decimal>,
-    pub inst_id: String,
+    /// Instrument type
     #[serde(deserialize_with = "deserialize_from_str")]
     pub inst_type: InstrumentType,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub interest: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub usd_px: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub last: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub lever: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub liab: Option<Decimal>,
-    pub liab_ccy: Option<String>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub liq_px: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub mark_px: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub margin: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_str")]
+    /// Margin mode
+    /// cross
+    /// isolated
     pub mgn_mode: MarginMode,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub mgn_ratio: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub mmr: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub notional_usd: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub opt_val: Option<Decimal>,
-    // #[serde(deserialize_with = "deserialize_timestamp")]
-    // pub p_time: DateTime<Utc>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub pos: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub pos_ccy: Option<String>,
+    /// Position ID
     pub pos_id: String,
-    #[serde(deserialize_with = "deserialize_from_str")]
+    /// Position side
+    /// long, pos is positive
+    /// short, pos is positive
+    /// net (FUTURES/SWAP/OPTION: positive pos means long position and negative pos means short position. For MARGIN, pos is always positive, posCcy being base currency means long position, posCcy being quote currency means short position.)
     pub pos_side: PositionSide,
+    /// Quantity of positions. In the mode of autonomous transfer from position to position, after the deposit is transferred, a position with pos of 0 will be generated
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub pos: Option<Decimal>,
+    /// Base currency balance, only applicable to MARGIN（Manual transfers and Quick Margin Mode）
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub base_bal: Option<Decimal>,
+    /// Quote currency balance, only applicable to MARGIN（Manual transfers and Quick Margin Mode）
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub quote_bal: Option<Decimal>,
+    /// Base currency amount already borrowed, only applicable to MARGIN(Quick Margin Mode）
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub base_borrowed: Option<Decimal>,
+    /// Base Interest, undeducted interest that has been incurred, only applicable to MARGIN(Quick Margin Mode）
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub base_interest: Option<Decimal>,
+    /// Quote currency amount already borrowed, only applicable to MARGIN(Quick Margin Mode）
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub quote_borrowed: Option<Decimal>,
+    /// Quote Interest, undeducted interest that has been incurred, only applicable to MARGIN(Quick Margin Mode）
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub quote_interest: Option<Decimal>,
+    /// Position currency, only applicable to MARGIN positions.
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub pos_ccy: Option<String>,
+    /// Position that can be closed
+    /// Only applicable to MARGIN, FUTURES/SWAP in the long-short mode and OPTION.
+    /// For Margin position, the rest of sz will be SPOT trading after the liability is repaid while closing the position. Please get the available reduce-only amount from "Get maximum available tradable amount" if you want to reduce the amount of SPOT trading as much as possible.
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub avail_pos: Option<Decimal>,
+    /// Average open price
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub avg_px: Option<Decimal>,
+    /// Latest Mark price
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub mark_px: Option<Decimal>,
+    /// Unrealized profit and loss calculated by mark price.
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub upl: Option<Decimal>,
+    /// Unrealized profit and loss ratio calculated by mark price.
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub upl_ratio: Option<Decimal>,
+    /// Unrealized profit and loss calculated by last price. Main usage is showing, actual value is upl.
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub upl_last_px: Option<Decimal>,
+    /// Unrealized profit and loss ratio calculated by last price.
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub upl_ratio_last_px: Option<Decimal>,
+    /// Instrument ID, e.g. BTC-USD-180216
+    pub inst_id: String,
+    /// Leverage, not applicable to OPTION
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub lever: Option<Decimal>,
+    /// Estimated liquidation price
+    /// Not applicable to OPTION
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub liq_px: Option<Decimal>,
+    /// Initial margin requirement, only applicable to cross.
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub imr: Option<Decimal>,
+    /// Margin, can be added or reduced. Only applicable to isolated.
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub margin: Option<Decimal>,
+    /// Margin ratio
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub mgn_ratio: Option<Decimal>,
+    /// Maintenance margin requirement
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub mmr: Option<Decimal>,
+    /// Liabilities, only applicable to MARGIN.
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub liab: Option<Decimal>,
+    /// Liabilities currency, only applicable to MARGIN.
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub liab_ccy: Option<String>,
+    /// Interest. Undeducted interest that has been incurred.
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub interest: Option<Decimal>,
+    /// Last trade ID
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub trade_id: Option<String>,
+    /// Option Value, only applicable to OPTION.
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub opt_val: Option<Decimal>,
+    /// Notional value of positions in USD
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub notional_usd: Option<Decimal>,
+    /// Auto-deleveraging (ADL) indicator
+    /// Divided into 5 levels, from 1 to 5, the smaller the number, the weaker the adl intensity.
+    pub adl: String,
+    /// Currency used for margin
+    pub ccy: String,
+    /// Latest traded price
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub last: Option<Decimal>,
+    /// Latest underlying index price
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub idx_px: Option<Decimal>,
+    /// USD price
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub usd_px: Option<Decimal>,
+    /// Breakeven price
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub be_px: Option<Decimal>,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub delta_bs: Option<Decimal>,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub delta_pa: Option<Decimal>,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub gamma_bs: Option<Decimal>,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub gamma_pa: Option<Decimal>,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub theta_bs: Option<Decimal>,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub theta_pa: Option<Decimal>,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub vega_bs: Option<Decimal>,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub vega_pa: Option<Decimal>,
+    /// Spot in use amount
+    /// Applicable to Portfolio margin
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub spot_in_use_amt: Option<Decimal>,
+    /// Spot in use unit, e.g. BTC
+    /// Applicable to Portfolio margin
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub spot_in_use_ccy: Option<String>,
+    /// External business id, e.g. experience coupon id
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub biz_ref_id: Option<String>,
+    /// External business type
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub biz_ref_type: Option<String>,
+    /// Realized profit and loss
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub realized_pnl: Option<Decimal>,
+    /// Accumulated pnl of closing order(s)
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub pnl: Option<Decimal>,
+    /// Accumulated fee
+    /// Negative number represents the user transaction fee charged by the platform.Positive number represents rebate.
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub fee: Option<Decimal>,
+    /// Accumulated funding fee
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub funding_fee: Option<Decimal>,
+    /// Latest time position was adjusted, Unix timestamp format in milliseconds, e.g. 1597026383085
     #[serde(deserialize_with = "deserialize_timestamp")]
     pub u_time: DateTime<Utc>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub upl: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub upl_ratio: Option<Decimal>,
+    /// Creation time, Unix timestamp format in milliseconds, e.g. 1597026383085
+    #[serde(deserialize_with = "deserialize_timestamp")]
+    pub c_time: DateTime<Utc>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -457,15 +661,15 @@ pub struct PositionDetail {
 pub struct InterestAccrued {
     pub r#type: String,
     pub ccy: String,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub inst_id: Option<String>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub mgn_mode: Option<MarginMode>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub interest: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub interest_rate: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub liab: Option<Decimal>,
     #[serde(deserialize_with = "deserialize_timestamp")]
     pub ts: DateTime<Utc>,
@@ -1031,4 +1235,64 @@ pub struct FundTransferHistory {
     pub sub_acct: Option<String>,
     #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
     pub state: FundTransferState,
+}
+
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct DepositAddress {
+    /// Deposit address
+    pub addr: String,
+    /// Deposit tag (This will not be returned if the currency does not require a tag for deposit)
+    pub tag: Option<String>,
+    /// Deposit memo (This will not be returned if the currency does not require a payment_id for deposit)
+    pub memo: Option<String>,
+    /// Deposit payment ID (This will not be returned if the currency does not require a payment_id for deposit)
+    pub pmt_id: Option<String>,
+    /// Object	Deposit address attachment (This will not be returned if the currency does not require this)
+    /// e.g. TONCOIN attached tag name is comment, the return will be {'comment':'123456'}
+    pub addr_ex: Option<String>,
+    /// Currency, e.g. BTC
+    pub ccy: String,
+    /// Chain name, e.g. USDT-ERC20, USDT-TRC20
+    pub chain: String,
+    /// The beneficiary account
+    /// 6: Funding account 18: Trading account
+    pub to: AccountType,
+    /// Return true if the current deposit address is selected by the website page
+    pub selected: bool,
+    /// Last 6 digits of contract address
+    pub ct_addr: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct DepositHistory {
+    /// Currency, e.g. BTC
+    pub ccy: String,
+    /// Deposit ID
+    pub dep_id: String,
+    /// Chain name
+    pub chain: String,
+    /// Deposit amount
+    pub amt: Decimal,
+    /// Deposite account
+    // If the deposit comes from an internal transfer, this field displays the account information of the internal transfer initiator, which can be mobile phone number, email address, account name, and will return "" in other cases
+    pub from: String,
+    /// Deposit address
+    /// If the deposit comes from the on-chain, this field displays the on-chain address, and will return "" in other cases
+    pub to: String,
+    /// Hash record of the deposit
+    pub tx_id: String,
+    /// Time that the deposit record is created, Unix timestamp format in milliseconds, e.g. 1655251200000
+    #[serde(deserialize_with = "deserialize_timestamp")]
+    pub ts: DateTime<Utc>,
+    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
+    pub state: DepositStatus,
+    /// Actual amount of blockchain confirm in a single deposit
+    pub actual_dep_blk_confirm: String,
+    /// internal transfer initiator's withdrawal ID
+    /// If the deposit comes from internal transfer, this field displays the withdrawal ID of the internal transfer initiator
+    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub from_wd_id: Option<String>,
 }

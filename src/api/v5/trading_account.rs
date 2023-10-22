@@ -6,11 +6,20 @@ use crate::api::v5::Request;
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
 
-/// https://www.okx.com/docs-v5/en/#rest-api-account-get-balance
+/// https://www.okx.com/docs-v5/en/#trading-account-rest-api-get-balance
+/// ## Get balance
+/// Retrieve a list of assets (with non-zero balance), remaining balance, and available amount in the trading account.
+///
+///  Interest-free quota and discount rates are public data and not displayed on the account interface.
+/// Rate Limit: 10 requests per 2 seconds
+/// Rate limit rule: UserID
+/// ## HTTP Requests
+/// GET /api/v5/account/balance
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct GetTradingBalances {
     #[serde(skip_serializing_if = "Option::is_none")]
+    /// Single currency or multiple currencies (no more than 20) separated with comma, e.g. BTC or BTC,ETH.
     pub ccy: Option<String>,
 }
 
@@ -21,7 +30,31 @@ impl Request for GetTradingBalances {
     type Response = Vec<TradingBalanceDetail>;
 }
 
-/// https://www.okx.com/docs-v5/en/#rest-api-account-get-positions
+#[cfg(test)]
+mod tests_get_trading_balances {
+    use crate::api::v5::testkit::test_with_credentials;
+
+    #[ignore]
+    #[tokio::test]
+    async fn test_deser() {
+        test_with_credentials(|client| async move {
+            let resp = client
+                .request(crate::api::v5::trading_account::GetTradingBalances::default())
+                .await
+                .unwrap();
+            println!("{:#?}", resp);
+        }).await;
+    }
+}
+
+/// https://www.okx.com/docs-v5/en/#trading-account-rest-api-get-positions
+/// ## Get positions
+/// Retrieve information on your positions. When the account is in net mode, net positions will be displayed, and when the account is in long/short mode, long or short positions will be displayed. Return in reverse chronological order using ctime.
+///
+/// Rate Limit: 10 requests per 2 seconds
+/// Rate limit rule: UserID
+/// ## HTTP Request
+/// GET /api/v5/account/positions
 #[derive(Debug, Serialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct GetPositions {

@@ -180,9 +180,12 @@ pub enum AssetBillType {
     TransferInCustodyFundingAccount,
     CustodyFundDelegation,
     CustodyFundUndelegation,
+    /// wildcard
+    Other(String),
 }
 
 impl_string_enum!(AssetBillType,
+    Other,
     Deposit => "1",
     Withdrawal => "2",
     CanceledWithdrawal => "13",
@@ -375,12 +378,12 @@ pub struct AssetBill {
 
 // gen test for get_asset_bills
 #[cfg(test)]
-mod test_get_asset_bills {
+mod tests_get_asset_bills {
     use crate::api::v5::funding_account::GetAssetBills;
     use crate::api::v5::testkit::test_with_credentials;
 
     #[tokio::test]
-    async fn get_asset_bills() {
+    async fn test_deser() {
         test_with_credentials(|client| async move {
             let resp = client
                 .request(GetAssetBills::default())

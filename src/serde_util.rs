@@ -1,7 +1,7 @@
 use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::de::Error;
 use serde::{de, Deserialize, Deserializer, Serializer};
-use std::fmt::Display;
+use std::fmt::{Debug, Display};
 use std::str::FromStr;
 
 pub fn deserialize_from_str<'de, D, T>(deserializer: D) -> Result<T, D::Error>
@@ -92,6 +92,48 @@ macro_rules! impl_serde_from_str {
 
 #[macro_export]
 macro_rules! impl_string_enum {
+    ($name:ident, $wildcard:tt, $($variant:tt => $variant_str:expr,)+) => {
+        impl std::fmt::Display for $name {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                match self {
+                    $(
+                        Self::$variant => write!(f, $variant_str)
+                    ),*,
+                    Self::$wildcard(other) => write!(f, "{}", other)
+                }
+            }
+        }
+
+        impl std::str::FromStr for $name {
+            type Err = anyhow::Error;
+
+            fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+                match s {
+                    $(
+                        $variant_str => { return std::result::Result::Ok(Self::$variant) }
+                    ),*,
+                    other => { return std::result::Result::Ok(Self::$wildcard(other.to_string())) }
+                }
+            }
+        }
+
+        impl $name {
+            #[allow(dead_code)]
+            #[inline]
+            pub const fn as_str(&self) -> &'static str {
+                match self {
+                    $(
+                        Self::$variant => $variant_str
+                    ),*,
+                    /// dynamic string is not feasible for const fn 'static str
+                    Self::$wildcard(other) => "unhandled_const_str"
+                }
+            }
+        }
+
+        $crate::impl_serde_from_str!($name);
+    };
+
     ($name:ident, $($variant:tt => $variant_str:expr,)+) => {
         impl std::fmt::Display for $name {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -129,7 +171,7 @@ macro_rules! impl_string_enum {
         }
 
         $crate::impl_serde_from_str!($name);
-    }
+    };
 }
 
 pub fn serialize_as_str_opt<S, T>(dt: &Option<T>, serializer: S) -> Result<S::Ok, S::Error>
@@ -152,4 +194,60 @@ where
     T: std::fmt::Display,
 {
     serializer.serialize_str(&dt.to_string())
+}
+
+pub const fn none<T>() -> Option<T> {
+    None
+}
+#[cfg(test)]
+mod tests_maybe_string {
+    use rust_decimal::Decimal;
+    use serde::Deserialize;
+
+    #[test]
+    fn test_deser_empty_str() {
+        use super::*;
+        #[derive(Debug, Deserialize)]
+        struct Foo {
+            #[serde(default = "none", deserialize_with = "deserialize_from_opt_str")]
+            bar: Option<String>,
+        }
+        let s = r#"{
+            "bar": ""
+        }"#;
+        let m = serde_json::from_str::<Foo>(s).unwrap();
+        assert!(m.bar.is_none());
+
+        let s = r#"{
+        }"#;
+        let m = serde_json::from_str::<Foo>(s).unwrap();
+        assert!(m.bar.is_none());
+    }
+
+    #[test]
+    fn test_deser_empty_decimal() {
+        use super::*;
+        #[derive(Debug, Deserialize)]
+        struct Foo {
+            #[serde(default = "none", deserialize_with = "deserialize_from_opt_str")]
+            bar: Option<Decimal>,
+        }
+        let s = r#"{
+            "bar": ""
+        }"#;
+        let m = serde_json::from_str::<Foo>(s).unwrap();
+        assert!(m.bar.is_none());
+
+        let s = r#"{
+        }"#;
+        let m = serde_json::from_str::<Foo>(s).unwrap();
+        assert!(m.bar.is_none());
+
+        let s = r#"{
+            "bar": "100"
+        }"#;
+        let m = serde_json::from_str::<Foo>(s).unwrap();
+        assert!(m.bar.is_some());
+        assert_eq!(m.bar.unwrap(), Decimal::new(100, 0));
+    }
 }

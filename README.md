@@ -13,8 +13,8 @@ okx-rs = { git = "https://github.com/roytang121/okx-rs" }
 <details>
   <summary>Rest</summary>
 
-- [ ] REST / Get balance
-- [ ] REST / Get positions
+- [x] REST / Get balance
+- [x] REST / Get positions
 - [ ] REST / Get positions history
 - [ ] REST / Get account and position risk
 - [ ] REST / Get bills details (last 7 days)
@@ -183,10 +183,10 @@ okx-rs = { git = "https://github.com/roytang121/okx-rs" }
 - [ ] REST / Lightning deposits
 - [x] REST / Get deposit address
 - [x] REST / Get deposit history
-- [ ] REST / Withdrawal
+- [x] REST / Withdrawal
 - [ ] REST / Lightning withdrawals
 - [ ] REST / Cancel withdrawal
-- [ ] REST / Get withdrawal history
+- [x] REST / Get withdrawal history
 - [ ] REST / Get deposit withdraw status
 - [ ] REST / Small assets convert
 - [ ] REST / Get exchange list (public)
