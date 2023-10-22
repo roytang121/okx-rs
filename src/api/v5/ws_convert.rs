@@ -1,5 +1,5 @@
-use crate::api::v5::WsResponse;
 use crate::api::v5::websocket::{Instruments, MarkPrices};
+use crate::api::v5::WsResponse;
 use crate::websocket::conn::{BboTbt, Books, Books5};
 use crate::websocket::WebsocketChannel;
 
@@ -9,7 +9,10 @@ pub trait TryParseEvent {
     type Value<'a>;
     fn try_parse(msg: &str) -> Option<Self::Value<'_>>;
 }
-impl<T> TryParseEvent for T where T: WebsocketChannel {
+impl<T> TryParseEvent for T
+where
+    T: WebsocketChannel,
+{
     type Value<'a> = <T as WebsocketChannel>::Response<'a>;
 
     fn try_parse(msg: &str) -> Option<Self::Value<'_>> {
@@ -23,7 +26,10 @@ impl<T> TryParseEvent for T where T: WebsocketChannel {
             if msg.contains(r#""event":"unsubscribe""#) {
                 return None;
             }
-            let response: WsResponse<<T as WebsocketChannel>::ArgType<'_>, <T as WebsocketChannel>::Response<'_>> = serde_json::from_str(msg).unwrap();
+            let response: WsResponse<
+                <T as WebsocketChannel>::ArgType<'_>,
+                <T as WebsocketChannel>::Response<'_>,
+            > = serde_json::from_str(msg).unwrap();
             response.data
         } else {
             None
@@ -32,7 +38,9 @@ impl<T> TryParseEvent for T where T: WebsocketChannel {
 }
 
 impl OKXWsConvert {
-    pub fn try_parse_instruments(msg: &str) -> Option<<Instruments as WebsocketChannel>::Response<'_>> {
+    pub fn try_parse_instruments(
+        msg: &str,
+    ) -> Option<<Instruments as WebsocketChannel>::Response<'_>> {
         if msg.contains(Instruments::CHANNEL) {
             if msg.contains(r#"event": "error"#) {
                 return None;
@@ -43,14 +51,19 @@ impl OKXWsConvert {
             if msg.contains(r#"event": "unsubscribe"#) {
                 return None;
             }
-            let response: WsResponse<<Instruments as WebsocketChannel>::ArgType<'_>, <Instruments as WebsocketChannel>::Response<'_>> = serde_json::from_str(msg).ok()?;
+            let response: WsResponse<
+                <Instruments as WebsocketChannel>::ArgType<'_>,
+                <Instruments as WebsocketChannel>::Response<'_>,
+            > = serde_json::from_str(msg).ok()?;
             response.data
         } else {
             None
         }
     }
 
-    pub fn try_parse_mark_prices(msg: &str) -> Option<<MarkPrices as WebsocketChannel>::Response<'_>> {
+    pub fn try_parse_mark_prices(
+        msg: &str,
+    ) -> Option<<MarkPrices as WebsocketChannel>::Response<'_>> {
         if msg.contains(MarkPrices::CHANNEL) {
             if msg.contains(r#"event": "error"#) {
                 return None;
@@ -61,7 +74,10 @@ impl OKXWsConvert {
             if msg.contains(r#"event": "unsubscribe"#) {
                 return None;
             }
-            let response: WsResponse<<MarkPrices as WebsocketChannel>::ArgType<'_>, <MarkPrices as WebsocketChannel>::Response<'_>> = serde_json::from_str(msg).unwrap();
+            let response: WsResponse<
+                <MarkPrices as WebsocketChannel>::ArgType<'_>,
+                <MarkPrices as WebsocketChannel>::Response<'_>,
+            > = serde_json::from_str(msg).unwrap();
             response.data
         } else {
             None
@@ -80,7 +96,10 @@ impl OKXWsConvert {
             if msg.contains(r#"event": "unsubscribe"#) {
                 return None;
             }
-            let response: WsResponse<<Books5 as WebsocketChannel>::ArgType<'_>, <Books5 as WebsocketChannel>::Response<'_>> = serde_json::from_str(msg).unwrap();
+            let response: WsResponse<
+                <Books5 as WebsocketChannel>::ArgType<'_>,
+                <Books5 as WebsocketChannel>::Response<'_>,
+            > = serde_json::from_str(msg).unwrap();
             response.data
         } else {
             None
@@ -88,7 +107,10 @@ impl OKXWsConvert {
     }
 
     pub fn try_parse_book_update(msg: &str) -> Option<<Books as WebsocketChannel>::Response<'_>> {
-        if msg.contains(BboTbt::CHANNEL) || msg.contains(Books5::CHANNEL) || msg.contains(Books::CHANNEL) {
+        if msg.contains(BboTbt::CHANNEL)
+            || msg.contains(Books5::CHANNEL)
+            || msg.contains(Books::CHANNEL)
+        {
             if msg.contains(r#"event": "error"#) {
                 return None;
             }
@@ -99,7 +121,10 @@ impl OKXWsConvert {
                 return None;
             }
             // println!("{}", msg);
-            let response: WsResponse<<Books as WebsocketChannel>::ArgType<'_>, <Books as WebsocketChannel>::Response<'_>> = serde_json::from_str(msg).unwrap();
+            let response: WsResponse<
+                <Books as WebsocketChannel>::ArgType<'_>,
+                <Books as WebsocketChannel>::Response<'_>,
+            > = serde_json::from_str(msg).unwrap();
             response.data
         } else {
             None

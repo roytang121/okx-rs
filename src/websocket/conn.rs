@@ -1,7 +1,7 @@
-use serde::{Deserialize, Serialize};
-use serde_json::json;
 use crate::api::v5::BookUpdate;
 use crate::websocket::WebsocketChannel;
+use serde::{Deserialize, Serialize};
+use serde_json::json;
 
 // FIXME: each book type can largely be combined into single Enum
 
@@ -35,18 +35,17 @@ impl WebsocketChannel for Books {
     type ArgType<'de> = BookChannelArg<'de>;
 
     fn subscribe_message(&self) -> String {
-        match self {
-            Books { inst_id } => json!({
-                "op": "subscribe",
-                "args": [
-                    {
-                        "channel": Self::CHANNEL,
-                        "instId": inst_id,
-                    }
-                ]
-            })
-                .to_string(),
-        }
+        let Books { inst_id } = self;
+        json!({
+            "op": "subscribe",
+            "args": [
+                {
+                    "channel": Self::CHANNEL,
+                    "instId": inst_id,
+                }
+            ]
+        })
+        .to_string()
     }
 
     fn unsubscribe_message(&self) -> String {
@@ -60,18 +59,17 @@ impl WebsocketChannel for Books5 {
     type ArgType<'de> = BookChannelArg<'de>;
 
     fn subscribe_message(&self) -> String {
-        match self {
-            Books5 { inst_id } => json!({
-                "op": "subscribe",
-                "args": [
-                    {
-                        "channel": Self::CHANNEL,
-                        "instId": inst_id,
-                    }
-                ]
-            })
-            .to_string(),
-        }
+        let Books5 { inst_id } = self;
+        json!({
+            "op": "subscribe",
+            "args": [
+                {
+                    "channel": Self::CHANNEL,
+                    "instId": inst_id,
+                }
+            ]
+        })
+        .to_string()
     }
 
     fn unsubscribe_message(&self) -> String {
@@ -85,18 +83,17 @@ impl WebsocketChannel for BboTbt {
     type ArgType<'de> = BookChannelArg<'de>;
 
     fn subscribe_message(&self) -> String {
-        match self {
-            BboTbt { inst_id } => json!({
-                "op": "subscribe",
-                "args": [
-                    {
-                        "channel": Self::CHANNEL,
-                        "instId": inst_id,
-                    }
-                ]
-            })
-                .to_string(),
-        }
+        let BboTbt { inst_id } = self;
+        json!({
+            "op": "subscribe",
+            "args": [
+                {
+                    "channel": Self::CHANNEL,
+                    "instId": inst_id,
+                }
+            ]
+        })
+        .to_string()
     }
 
     fn unsubscribe_message(&self) -> String {

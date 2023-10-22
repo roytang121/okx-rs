@@ -1,13 +1,11 @@
 //! https://www.okx.com/docs-v5/en/#rest-api-funding-get-funds-transfer-state
 
+use crate::api::v5::model::{AccountType, FundTransferHistory, TransferType};
 use crate::api::v5::Request;
 use crate::serde_util::deserialize_from_opt_str;
 use reqwest::Method;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::fmt::Display;
-use std::str::FromStr;
-use crate::api::v5::model::{AccountType, FundTransferHistory, TransferType};
 
 /// https://www.okx.com/docs-v5/en/#funding-account-rest-api-get-funds-transfer-state
 /// ## Get funds transfer state

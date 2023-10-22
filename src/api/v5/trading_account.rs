@@ -32,18 +32,19 @@ impl Request for GetTradingBalances {
 
 #[cfg(test)]
 mod tests_get_trading_balances {
-    use crate::api::v5::testkit::test_with_credentials;
+    use crate::api::v5::testkit::with_env_private_client;
 
     #[ignore]
     #[tokio::test]
     async fn test_deser() {
-        test_with_credentials(|client| async move {
+        with_env_private_client(|client| async move {
             let resp = client
                 .request(crate::api::v5::trading_account::GetTradingBalances::default())
                 .await
                 .unwrap();
             println!("{:#?}", resp);
-        }).await;
+        })
+        .await;
     }
 }
 

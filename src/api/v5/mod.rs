@@ -1,9 +1,8 @@
 use reqwest::Method;
 use serde::de::DeserializeOwned;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
-use std::fmt::{Debug, Display};
-use std::str::FromStr;
+use std::fmt::Debug;
 
 pub mod ws_convert;
 
@@ -11,10 +10,8 @@ pub mod funding_account;
 pub mod model;
 pub mod orderbook_trading;
 pub mod public_data;
-pub mod trading_account;
-
-#[cfg(test)]
 pub mod testkit;
+pub mod trading_account;
 
 pub use self::model::*;
 // re-export funding_account module

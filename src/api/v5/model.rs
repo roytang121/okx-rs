@@ -1,12 +1,12 @@
+use crate::api::v5::DepositStatus;
 use crate::impl_string_enum;
 use crate::serde_util::*;
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use rust_decimal::Decimal;
 use serde::de::{Error, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
-use std::fmt::{Display, Formatter};
+use std::fmt::Formatter;
 use std::str::FromStr;
-use crate::api::v5::DepositStatus;
 
 impl_string_enum!(InstrumentType,
     Spot => "SPOT",
@@ -996,27 +996,32 @@ impl<'de> Visitor<'de> for LevelVisitor {
         formatter.write_str("level format: [price, size, \"0\", orders]")
     }
 
-    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error> where A: SeqAccess<'de> {
+    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+    where
+        A: SeqAccess<'de>,
+    {
         match (
             seq.next_element::<Decimal>()?,
             seq.next_element::<Decimal>()?,
             seq.next_element::<&str>()?,
-            seq.next_element::<&str>()?
+            seq.next_element::<&str>()?,
         ) {
-            (Some(price), Some(size), Some("0"), Some(n_orders)) => {
-                Ok(Level {
-                    price,
-                    size,
-                    orders: usize::from_str(n_orders).map_err(|_| A::Error::custom("unknown number of orders format"))?,
-                })
-            }
+            (Some(price), Some(size), Some("0"), Some(n_orders)) => Ok(Level {
+                price,
+                size,
+                orders: usize::from_str(n_orders)
+                    .map_err(|_| A::Error::custom("unknown number of orders format"))?,
+            }),
             _ => Err(A::Error::custom("invalid level format")),
         }
     }
 }
 
 impl<'de> Deserialize<'de> for Level {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
         deserializer.deserialize_seq(LevelVisitor)
     }
 }
@@ -1093,7 +1098,7 @@ mod tests_parse_candle {
 
 #[derive(Debug, Deserialize)]
 pub struct ChannelArg<'a> {
-    pub channel: &'a str
+    pub channel: &'a str,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -1164,7 +1169,7 @@ pub struct Currency {
     pub dep_quote_daily_layer2: Option<Decimal>,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FundingBalance {
     /// Available balance
@@ -1237,7 +1242,6 @@ pub struct FundTransferHistory {
     pub state: FundTransferState,
 }
 
-
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DepositAddress {
@@ -1249,7 +1253,7 @@ pub struct DepositAddress {
     pub memo: Option<String>,
     /// Deposit payment ID (This will not be returned if the currency does not require a payment_id for deposit)
     pub pmt_id: Option<String>,
-    /// Object	Deposit address attachment (This will not be returned if the currency does not require this)
+    /// Object Deposit address attachment (This will not be returned if the currency does not require this)
     /// e.g. TONCOIN attached tag name is comment, the return will be {'comment':'123456'}
     pub addr_ex: Option<String>,
     /// Currency, e.g. BTC
@@ -1265,7 +1269,7 @@ pub struct DepositAddress {
     pub ct_addr: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DepositHistory {
     /// Currency, e.g. BTC

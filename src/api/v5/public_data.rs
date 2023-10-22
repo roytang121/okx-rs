@@ -1,12 +1,9 @@
-use std::{fmt::Display, str::FromStr};
-
 use crate::api::v5::{FundingRate, MarkPrice, TradeMode};
 use crate::{api::v5::Request, serde_util::*};
 use chrono::{DateTime, Utc};
 use reqwest::Method;
 use rust_decimal::Decimal;
-use serde::de::{Error, SeqAccess, Visitor};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 
 use crate::api::v5::model::{
     Candle, DeliveryExerciseHistory, DiscountRateAndInterestFreeQuota, FundingRateHistory,
@@ -688,8 +685,8 @@ pub struct IndexComponentItem {
 
 // Websockets
 pub mod websocket {
-    use crate::api::v5::ChannelArg;
     use super::*;
+    use crate::api::v5::ChannelArg;
     use crate::websocket::WebsocketChannel;
 
     pub struct Instruments(pub InstrumentType);

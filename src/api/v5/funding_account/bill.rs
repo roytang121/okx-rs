@@ -2,6 +2,7 @@
 
 use crate::api::v5::model::{InstrumentType, MarginMode};
 use crate::api::v5::{ExecType, Request};
+use crate::impl_string_enum;
 use crate::serde_util::{
     deserialize_from_opt_str, deserialize_timestamp, deserialize_timestamp_opt,
 };
@@ -12,7 +13,6 @@ use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use std::fmt::Formatter;
 use std::str::FromStr;
-use crate::impl_string_enum;
 
 #[derive(Debug, Clone)]
 pub enum AssetBillType {
@@ -380,11 +380,11 @@ pub struct AssetBill {
 #[cfg(test)]
 mod tests_get_asset_bills {
     use crate::api::v5::funding_account::GetAssetBills;
-    use crate::api::v5::testkit::test_with_credentials;
+    use crate::api::v5::testkit::with_env_private_client;
 
     #[tokio::test]
     async fn test_deser() {
-        test_with_credentials(|client| async move {
+        with_env_private_client(|client| async move {
             let resp = client
                 .request(GetAssetBills::default())
                 .await

@@ -3,12 +3,24 @@ use crate::api::Rest;
 use dotenv::dotenv;
 use std::future::Future;
 
-pub fn test_with_credentials<C, Fut>(ctx: C) -> impl Future<Output = ()>
+#[allow(clippy::manual_async_fn)]
+pub fn with_public_client<C, Fut>(ctx: C) -> impl Future<Output = ()>
 where
     C: FnOnce(Rest) -> Fut,
     Fut: Future<Output = ()>,
 {
-    dotenv().ok().expect("Failed to read .env file");
+    async move {
+        ctx(Rest::new(Options::default())).await;
+    }
+}
+
+#[allow(clippy::manual_async_fn)]
+pub fn with_env_private_client<C, Fut>(ctx: C) -> impl Future<Output = ()>
+where
+    C: FnOnce(Rest) -> Fut,
+    Fut: Future<Output = ()>,
+{
+    dotenv().expect("Failed to read .env file");
 
     async move {
         let api_key = std::env::var("OKX_API_KEY").expect("OKX_API_KEY not set");
@@ -31,7 +43,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_read_env_creds() {
-        test_with_credentials(|rest| async move {
+        with_env_private_client(|rest| async move {
             let rval = rest.request(GetCurrencies::default()).await.unwrap();
             assert!(!rval.is_empty())
         })

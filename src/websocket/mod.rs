@@ -1,12 +1,7 @@
 use crossbeam_utils::Backoff;
+use serde::Deserialize;
 use std::time::Instant;
 use std::{fmt::Debug, time::Duration};
-use std::future::Future;
-use std::net::ToSocketAddrs;
-use serde::{Deserialize, Serialize};
-use serde_json::de::Read;
-use tungstenite::stream::NoDelay;
-use crate::api::v5::ChannelArg;
 
 pub mod conn;
 
@@ -74,7 +69,7 @@ impl<T: WebsocketChannel + Send + Sync> WebsocketConn for PublicChannel<T> {
         Ok(())
     }
 
-    async fn unsubscribe_async(&self, sender: &tokio::sync::mpsc::Sender<String>) -> Result<()> {
+    async fn unsubscribe_async(&self, _sender: &tokio::sync::mpsc::Sender<String>) -> Result<()> {
         todo!()
     }
 }
@@ -140,10 +135,17 @@ pub trait WebsocketSession {
 }
 
 #[async_trait::async_trait]
-pub trait AsyncWebsocketSession where Self: Send + Sync + WebsocketSession {
+pub trait AsyncWebsocketSession
+where
+    Self: Send + Sync + WebsocketSession,
+{
     type Client: AsyncWebsocketClient + Send;
 
-    async fn spawn(&mut self, mut client: Box<<Self as AsyncWebsocketSession>::Client>, inbound: tokio::sync::mpsc::Sender<Message>) {
+    async fn spawn(
+        &mut self,
+        mut client: Box<<Self as AsyncWebsocketSession>::Client>,
+        inbound: tokio::sync::mpsc::Sender<Message>,
+    ) {
         let (outbound, mut outbound_recv) = tokio::sync::mpsc::channel(1024);
         for conn in self.conns() {
             if let Err(err) = conn.subscribe_async(&outbound).await {
@@ -159,7 +161,7 @@ pub trait AsyncWebsocketSession where Self: Send + Sync + WebsocketSession {
                 result = client.next() => {
                     match result {
                         Ok(msg) => inbound.send(msg).await.unwrap(),
-                        Err(err) => todo!()
+                        Err(_err) => todo!()
                     }
                 }
                 else => continue,
@@ -167,7 +169,6 @@ pub trait AsyncWebsocketSession where Self: Send + Sync + WebsocketSession {
         }
     }
 }
-
 
 pub struct Subscriptions {
     pub channels: Vec<Box<dyn WebsocketConn>>,
@@ -190,14 +191,14 @@ impl AsyncWebsocketSession for Subscriptions {
 }
 
 pub mod sync {
-    use super::Result;
     use super::Error;
-    use tungstenite::{client, client::connect_with_config, connect, stream::MaybeTlsStream, WebSocket};
-    use std::net::TcpStream;
-    use log::info;
-    use tungstenite::stream::NoDelay;
-    use url::Url;
+    use super::Result;
     use crate::websocket::{Message, WebsocketClient};
+    use log::info;
+    use std::net::TcpStream;
+    use tungstenite::stream::NoDelay;
+    use tungstenite::{client::connect_with_config, stream::MaybeTlsStream, WebSocket};
+    use url::Url;
 
     pub struct OKXWebsocketClient {
         socket: WebSocket<MaybeTlsStream<TcpStream>>,
@@ -239,7 +240,7 @@ pub mod sync {
             info!("send: {}", msg);
             self.socket
                 .send(tungstenite::Message::Text(msg.to_string()))
-                .map_err(|err| Error::Tungstenite(err))
+                .map_err(Error::Tungstenite)
         }
 
         fn next(&mut self) -> Result<Message> {
@@ -253,17 +254,14 @@ pub mod sync {
 }
 
 pub mod async_client {
-    use async_trait::async_trait;
-    use super::{Result, Error};
-    use log::info;
-    use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
-    use tokio::io::{AsyncReadExt, AsyncWriteExt};
-    use tokio::net::TcpStream;
-    use tungstenite::stream::NoDelay;
-    use url::Url;
+    use super::{Error, Result};
+    use crate::websocket::{AsyncWebsocketClient, Message};
     use futures_util::stream::{SplitSink, SplitStream};
     use futures_util::{SinkExt, StreamExt};
-    use crate::websocket::{AsyncWebsocketClient, Message};
+    use log::info;
+    use tokio::net::TcpStream;
+    use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
+    use url::Url;
 
     pub struct OKXWebsocketClient {
         pub write: SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, tungstenite::Message>,
@@ -282,13 +280,18 @@ pub mod async_client {
                             stream.set_nodelay(true).unwrap();
                         }
                         MaybeTlsStream::NativeTls(stream) => {
-                            stream.get_mut().get_mut().get_mut().set_nodelay(true).unwrap();
+                            stream
+                                .get_mut()
+                                .get_mut()
+                                .get_mut()
+                                .set_nodelay(true)
+                                .unwrap();
                         }
-                        _ => unimplemented!()
+                        _ => unimplemented!(),
                     }
                     socket
-                },
-                Err(err) => panic!("unhandled err: {}", err)
+                }
+                Err(err) => panic!("unhandled err: {}", err),
             };
             let (write, read) = socket.split();
             Ok(Self { write, read })
@@ -311,7 +314,7 @@ pub mod async_client {
             self.write
                 .send(tungstenite::Message::Text(msg.to_string()))
                 .await
-                .map_err(|err| Error::Tungstenite(err))
+                .map_err(Error::Tungstenite)
         }
     }
 }

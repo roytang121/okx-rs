@@ -1,9 +1,11 @@
+use crate::api::v5::{
+    AccountBill, AccountBillSubType, AccountBillType, AssetBill, Currency, FundingBalance, Request,
+};
+use crate::serde_util::*;
 use chrono::{DateTime, Utc};
 use reqwest::Method;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use crate::api::v5::{AccountBill, AccountBillSubType, AccountBillType, AssetBill, Currency, FundingBalance, Request};
-use crate::serde_util::*;
 
 pub mod bill;
 pub mod deposit;
@@ -37,17 +39,18 @@ impl Request for GetCurrencies {
 #[cfg(test)]
 mod tests {
     use crate::api::v5::funding_account::GetCurrencies;
-    use crate::api::v5::testkit::test_with_credentials;
+    use crate::api::v5::testkit::with_env_private_client;
 
     #[tokio::test]
     async fn get_currencies() {
-        test_with_credentials(|client| async move {
+        with_env_private_client(|client| async move {
             let resp = client
                 .request(GetCurrencies::default())
                 .await
                 .expect("get currencies");
             assert!(!resp.is_empty());
-        }).await;
+        })
+        .await;
     }
 }
 

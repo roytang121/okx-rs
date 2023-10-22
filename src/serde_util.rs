@@ -1,7 +1,7 @@
 use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::de::Error;
 use serde::{de, Deserialize, Deserializer, Serializer};
-use std::fmt::{Debug, Display};
+use std::fmt::Display;
 use std::str::FromStr;
 
 pub fn deserialize_from_str<'de, D, T>(deserializer: D) -> Result<T, D::Error>
@@ -50,7 +50,7 @@ where
     match s.as_str() {
         "" => Ok(None),
         s => {
-            let time_ms = i64::from_str(&s)
+            let time_ms = i64::from_str(s)
                 .map_err(|err| D::Error::custom(format!("invalid time_ms {s}. {err}")))?;
             let ndt = NaiveDateTime::from_timestamp_millis(time_ms).unwrap();
             Ok(Some(ndt.and_local_timezone(Utc).unwrap()))
@@ -125,8 +125,8 @@ macro_rules! impl_string_enum {
                     $(
                         Self::$variant => $variant_str
                     ),*,
-                    /// dynamic string is not feasible for const fn 'static str
-                    Self::$wildcard(other) => "unhandled_const_str"
+                    // dynamic string is not feasible for const fn 'static str
+                    Self::$wildcard(_) => "unhandled_const_str"
                 }
             }
         }
@@ -207,6 +207,7 @@ mod tests_maybe_string {
     #[test]
     fn test_deser_empty_str() {
         use super::*;
+        use std::fmt::Debug;
         #[derive(Debug, Deserialize)]
         struct Foo {
             #[serde(default = "none", deserialize_with = "deserialize_from_opt_str")]

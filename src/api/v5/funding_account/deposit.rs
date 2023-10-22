@@ -1,11 +1,10 @@
-use crate::api::v5::Request;
-use chrono::{DateTime, Utc};
-use reqwest::Method;
-use serde::{Deserialize, Serialize};
-use std::str::FromStr;
 use crate::api::v5::model::{DepositAddress, DepositHistory};
+use crate::api::v5::Request;
 use crate::impl_string_enum;
 use crate::serde_util::*;
+use chrono::{DateTime, Utc};
+use reqwest::Method;
+use serde::Serialize;
 
 #[derive(Debug, Clone)]
 pub enum DepositStatus {
@@ -106,20 +105,20 @@ impl Request for GetDepositHistory {
 // gen test get deposit history
 #[cfg(test)]
 mod tests_get_deposit_history {
-    use crate::api::v5::testkit::test_with_credentials;
     use super::*;
+    use crate::api::v5::testkit::with_env_private_client;
 
     #[tokio::test]
     #[ignore]
     async fn test_deser() {
-        test_with_credentials(|rest| async move {
+        with_env_private_client(|rest| async move {
             let req = GetDepositHistory::default();
             let rval = rest.request(req).await.unwrap();
             println!("{:?}", rval);
-        }).await;
+        })
+        .await;
     }
 }
-
 
 /// https://www.okx.com/docs-v5/en/#funding-account-rest-api-get-deposit-address
 /// ## Get deposit address

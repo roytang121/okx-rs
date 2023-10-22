@@ -1,7 +1,7 @@
 use crate::api::v5::model::Side;
-use crate::api::v5::Request;
+use crate::api::v5::{IndexTicker, Request};
 use crate::serde_util::deserialize_from_str;
-use crate::serde_util::{deserialize_from_opt_str, deserialize_timestamp};
+use crate::serde_util::*;
 use chrono::{DateTime, Utc};
 use reqwest::Method;
 use rust_decimal::Decimal;
@@ -15,21 +15,6 @@ pub struct GetIndexPrice {
     pub quote_ccy: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub inst_id: Option<String>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct IndexTicker {
-    pub inst_id: String,
-    #[serde(rename = "idxPx")]
-    pub index_price: Decimal,
-    // high24h: Decimal,
-    // sodUtc0: Decimal,
-    // open24h: Decimal,
-    // low24h: Decimal,
-    // sodUtc8: Decimal,
-    #[serde(rename = "ts", deserialize_with = "deserialize_timestamp")]
-    pub timestamp: DateTime<Utc>,
 }
 
 impl Request for GetIndexPrice {

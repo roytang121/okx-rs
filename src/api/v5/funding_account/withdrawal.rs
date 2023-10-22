@@ -1,11 +1,10 @@
 use crate::api::v5::Request;
-use crate::serde_util::{none, deserialize_from_opt_str, deserialize_timestamp};
+use crate::impl_string_enum;
+use crate::serde_util::{deserialize_from_opt_str, deserialize_timestamp, none};
 use chrono::{DateTime, Utc};
 use reqwest::Method;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
-use crate::impl_string_enum;
 
 #[derive(Debug, Clone)]
 pub enum WithdrawalStatus {
@@ -217,20 +216,20 @@ impl Request for GetWithdrawalHistory {
 
 #[cfg(test)]
 mod tests_get_withdrawal_history {
-    use crate::api::v5::testkit::test_with_credentials;
     use super::*;
+    use crate::api::v5::testkit::with_env_private_client;
 
     #[tokio::test]
     #[ignore]
     async fn test_deser() {
-        test_with_credentials(|rest| async move {
+        with_env_private_client(|rest| async move {
             let req = GetWithdrawalHistory::default();
             let rval = rest.request(req).await.unwrap();
             println!("{:#?}", rval);
-        }).await;
+        })
+        .await;
     }
 }
-
 
 #[derive(Debug, Clone, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
