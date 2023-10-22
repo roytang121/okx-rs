@@ -7,8 +7,32 @@ Unofficial Rust Library for the OKX V5 API.
 okx-rs = { git = "https://github.com/roytang121/okx-rs" }
 ```
 
+## Examples
+### Get Funding Balances
+> Get the balance of the funding account.
+```rust
+use okx_rs::api::v5::funding_account::GetFundingBalances;
+use okx_rs::api::v5::testkit::with_env_private_client;
+
+/// Rest API - get funding balances
+#[tokio::main]
+async fn main() {
+    with_env_private_client(|client| async move {
+        let response = client
+            .request(GetFundingBalances {
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+        println!("{}", serde_json::to_string_pretty(&response).unwrap());
+    })
+    .await;
+}
+```
+
 <!-- extracted from https://www.okx.com/docs-v5/en/ -->
 ## V5 API Features
+> The following is a list of all the features that are currently supported by the library. The list is updated as the library is updated. If you find any problems, please submit an issue or pull request.
 ### Trading Account
 <details>
   <summary>Rest</summary>
