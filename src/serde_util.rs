@@ -252,3 +252,52 @@ mod tests_maybe_string {
         assert_eq!(m.bar.unwrap(), Decimal::new(100, 0));
     }
 }
+
+// serde util for time
+#[derive(Debug)]
+pub struct Timestamp(DateTime<Utc>);
+
+impl<'de> Deserialize<'de> for Timestamp {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        // TODO: detect microsecond timestmap
+        let time_ms = i64::from_str(&s)
+            .map_err(|err| D::Error::custom(format!("invalid time_ms {s}. {err}")))?;
+        let ndt = NaiveDateTime::from_timestamp_millis(time_ms).unwrap();
+        Ok(Timestamp(ndt.and_local_timezone(Utc).unwrap()))
+    }
+}
+
+impl AsRef<DateTime<Utc>> for Timestamp {
+    fn as_ref(&self) -> &DateTime<Utc> {
+        &self.0
+    }
+}
+
+// generate test for test deser Timestamp from json
+#[cfg(test)]
+mod tests_timestamp {
+    use super::Timestamp;
+    use chrono::DateTime;
+    use serde::Deserialize;
+
+    #[derive(Debug, Deserialize)]
+    struct Foo {
+        bar: Timestamp,
+    }
+
+    #[test]
+    fn test_deser_timestamp() {
+        let s = r#"{
+            "bar": "1610000000000"
+        }"#;
+        let m = serde_json::from_str::<Foo>(s).unwrap();
+        assert_eq!(
+            m.bar.as_ref(),
+            &DateTime::parse_from_rfc3339("2021-01-07T06:13:20Z").unwrap()
+        );
+    }
+}

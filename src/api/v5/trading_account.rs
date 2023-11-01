@@ -3,8 +3,12 @@ use crate::api::v5::model::{
     TradingBalanceDetail,
 };
 use crate::api::v5::Request;
+use crate::websocket::WebsocketChannel;
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
+
+use super::ChannelArg;
 
 /// https://www.okx.com/docs-v5/en/#trading-account-rest-api-get-balance
 /// ## Get balance
@@ -77,6 +81,19 @@ impl Request for GetPositions {
     type Response = Vec<PositionDetail>;
 }
 
+/// https://www.okx.com/docs-v5/en/#trading-account-rest-api-get-positions-history
+/// ## Get positions history
+/// Retrieve the updated position data for the last 3 months. Return in reverse chronological order using utime.
+///
+/// Rate Limit: 1 request per 10 seconds
+/// Rate limit rule: UserID
+/// ### HTTP Request
+/// GET /api/v5/account/positions-history
+///
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct GetPositionsHistory {}
+
 /// https://www.okx.com/docs-v5/en/#rest-api-account-get-interest-accrued-data
 #[derive(Debug, Serialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
@@ -114,4 +131,36 @@ impl Request for GetInterestLimits {
     const PATH: &'static str = "/account/interest-limits";
     const AUTH: bool = true;
     type Response = Vec<InterestLimitResponse>;
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AccountChannel;
+
+impl WebsocketChannel for AccountChannel {
+    const AUTH: bool = true;
+    type Response<'de> = [TradingBalanceDetail; 1];
+    type ArgType<'de> = ChannelArg<'de>;
+
+    const CHANNEL: &'static str = "account";
+
+    fn subscribe_message(&self) -> String {
+        json!({
+            "op": "subscribe",
+            "args": [
+                {
+                    "channel": Self::CHANNEL,
+                    "extraParams": "
+                        {
+                          \"updateInterval\": \"1\"
+                        }
+                    "
+                }
+            ]
+        })
+        .to_string()
+    }
+
+    fn unsubscribe_message(&self) -> String {
+        todo!()
+    }
 }

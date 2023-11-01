@@ -41,3 +41,6 @@ tmp_data
 *.iml
 
 .DS_Store
+
+vendor
+profile*.json

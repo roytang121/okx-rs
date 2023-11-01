@@ -49,7 +49,7 @@ pub struct ApiResponse<T> {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct WsResponse<'a, A, T> {
+pub struct WsResponse<'a, A: Debug, T: Debug> {
     pub arg: A,
     pub event: Option<&'a str>,
     // pub data: Option<Vec<T>>,

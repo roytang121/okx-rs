@@ -943,18 +943,39 @@ pub struct Candle {
     pub confirm: CandleState,
 }
 
-#[derive(Debug, Clone)]
-pub struct Level {
-    pub price: Decimal,
-    pub size: Decimal,
-    pub orders: usize,
+#[derive(Debug, Clone, Copy)]
+pub struct Level<'a> {
+    pub price: &'a str,
+    pub size: &'a str,
+    pub orders: &'a str,
 }
 #[derive(Debug, Clone, Deserialize)]
 #[serde(untagged)]
-pub enum Levels {
-    Depth1([Level; 1]),
-    Depth5([Level; 5]),
-    Depths(Vec<Level>),
+pub enum Levels<'a >{
+    #[serde(borrow)]
+    Depth1([Level<'a>; 1]),
+    #[serde(borrow)]
+    Depth5([Level<'a>; 5]),
+    #[serde(borrow)]
+    Depths(Vec<Level<'a>>),
+}
+
+impl<'a> Levels<'a> {
+    pub fn iter(&self) -> impl Iterator<Item=&Level> + '_ {
+        match self {
+            Levels::Depth1(s) => s.iter(),
+            Levels::Depth5(s) => s.iter(),
+            Levels::Depths(s) => s.iter(),
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        match self {
+            Levels::Depth1(_) => 1,
+            Levels::Depth5(_) => 5,
+            Levels::Depths(s) => s.len(),
+        }
+    }
 }
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -965,14 +986,15 @@ pub struct BookUpdate<'a> {
     /// Sequence ID of the current message
     pub seq_id: i64,
     /// Sequence ID of the last sent message. Only applicable to books, books-l2-tbt, books50-l2-tbt
+    // FIXME: decide a default here. -1 ?
     #[serde(default)]
     pub prev_seq_id: i64,
     /// Order book on sell side
-    pub asks: Levels,
+    pub asks: Levels<'a>,
     /// Order book on bid side
-    pub bids: Levels,
-    #[serde(deserialize_with = "deserialize_timestamp")]
-    pub ts: DateTime<Utc>,
+    pub bids: Levels<'a>,
+    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
+    pub ts: i64,
 }
 
 #[cfg(test)]
@@ -990,7 +1012,7 @@ mod test {
 /// expecting level format: [price, size, "0", orders]
 struct LevelVisitor;
 impl<'de> Visitor<'de> for LevelVisitor {
-    type Value = Level;
+    type Value = Level<'de>;
 
     fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
         formatter.write_str("level format: [price, size, \"0\", orders]")
@@ -1001,23 +1023,22 @@ impl<'de> Visitor<'de> for LevelVisitor {
         A: SeqAccess<'de>,
     {
         match (
-            seq.next_element::<Decimal>()?,
-            seq.next_element::<Decimal>()?,
+            seq.next_element::<&str>()?,
+            seq.next_element::<&str>()?,
             seq.next_element::<&str>()?,
             seq.next_element::<&str>()?,
         ) {
-            (Some(price), Some(size), Some("0"), Some(n_orders)) => Ok(Level {
+            (Some(price), Some(size), Some("0"), Some(orders)) => Ok(Level {
                 price,
                 size,
-                orders: usize::from_str(n_orders)
-                    .map_err(|_| A::Error::custom("unknown number of orders format"))?,
+                orders
             }),
             _ => Err(A::Error::custom("invalid level format")),
         }
     }
 }
 
-impl<'de> Deserialize<'de> for Level {
+impl<'de> Deserialize<'de> for Level<'de> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,

@@ -1,7 +1,13 @@
-use crossbeam_utils::Backoff;
+use std::fmt::Debug;
+use std::os::fd::RawFd;
+
+use futures_util::{SinkExt, Stream, StreamExt, TryFutureExt, TryStreamExt};
+use futures_util::stream::{SplitSink, SplitStream};
 use serde::Deserialize;
-use std::time::Instant;
-use std::{fmt::Debug, time::Duration};
+use tokio::net::TcpStream;
+use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
+
+use crate::api::options::Options;
 
 pub mod conn;
 
@@ -10,10 +16,13 @@ pub enum Message {
     Data(String),
     Ping,
     Pong,
-    Error,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
+
+pub type TokioWsStream = WebSocketStream<MaybeTlsStream<TcpStream>>;
+pub type TokioSink = SplitSink<TokioWsStream, tungstenite::Message>;
+pub type TokioStream = SplitStream<TokioWsStream>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -23,19 +32,23 @@ pub enum Error {
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
 
+    // #[error("tokio channel error: {0}")]
+    // TokioChannelSend(#[from] tokio::sync::mpsc::error::SendError<_>),
     #[error("websocket error: {0}")]
     Other(String),
 }
 
-pub trait WebsocketClient {
-    fn send(&mut self, msg: &str) -> Result<()>;
-    fn next(&mut self) -> Result<Message>;
-}
-
 #[async_trait::async_trait]
 pub trait AsyncWebsocketClient {
-    async fn next(&mut self) -> Result<Message>;
+    type Sink;
+    type Stream;
+
+    async fn try_auth(&mut self, options: Options) -> Result<()>;
     async fn send(&mut self, msg: &str) -> Result<()>;
+    async fn next(&mut self) -> Result<Option<Message>>;
+    async fn quick_ack(&mut self);
+    fn split(self) -> (Self::Sink, Self::Stream);
+    fn fd(&self) -> RawFd;
 }
 
 pub struct PublicChannel<T>
@@ -49,223 +62,166 @@ impl<T> PublicChannel<T>
 where
     T: WebsocketChannel,
 {
-    pub fn new(channel: T) -> Box<Self> {
-        Box::new(Self { channel })
+    pub fn new(channel: T) -> Self {
+        Self { channel }
     }
-}
-
-#[async_trait::async_trait]
-impl<T: WebsocketChannel + Send + Sync> WebsocketConn for PublicChannel<T> {
-    fn subscribe(&self, client: &mut dyn WebsocketClient) -> Result<()> {
-        client.send(&self.channel.subscribe_message())
-    }
-
-    fn unsubscribe(&self, client: &mut dyn WebsocketClient) -> Result<()> {
-        client.send(&self.channel.unsubscribe_message())
-    }
-
-    async fn subscribe_async(&self, sender: &tokio::sync::mpsc::Sender<String>) -> Result<()> {
-        sender.send(self.channel.subscribe_message()).await.unwrap();
-        Ok(())
-    }
-
-    async fn unsubscribe_async(&self, _sender: &tokio::sync::mpsc::Sender<String>) -> Result<()> {
-        todo!()
-    }
-}
-
-#[async_trait::async_trait]
-pub trait WebsocketConn: Send + Sync {
-    fn subscribe(&self, client: &mut dyn WebsocketClient) -> Result<()>;
-    fn unsubscribe(&self, client: &mut dyn WebsocketClient) -> Result<()>;
-
-    async fn subscribe_async(&self, sender: &tokio::sync::mpsc::Sender<String>) -> Result<()>;
-    async fn unsubscribe_async(&self, sender: &tokio::sync::mpsc::Sender<String>) -> Result<()>;
 }
 
 pub trait WebsocketChannel: Send + Sync {
     const CHANNEL: &'static str;
-    type Response<'de>: Deserialize<'de>;
-    type ArgType<'de>: Deserialize<'de>;
+    const AUTH: bool = false;
+    type Response<'de>: Deserialize<'de> + Debug;
+    type ArgType<'de>: Deserialize<'de> + Debug;
 
     fn subscribe_message(&self) -> String;
     fn unsubscribe_message(&self) -> String;
-}
-
-pub trait WebsocketSession {
-    type Client: WebsocketClient;
-
-    fn start<F>(&mut self, mut client: Box<dyn WebsocketClient>, mut handler: F)
-    where
-        F: FnMut(Result<Message>),
-    {
-        // subscribe all channels
-        for conn in self.conns() {
-            if let Err(err) = conn.subscribe(&mut *client) {
-                handler(Err(err));
-            }
-        }
-
-        let backoff = Backoff::new();
-        let mut last_ping = Instant::now();
-        loop {
-            if last_ping.elapsed() > Duration::from_millis(5000) {
-                client
-                    .send("ping")
-                    .expect("unhandled ping error. probably connection closed");
-                last_ping = Instant::now();
-            }
-            match client.next() {
-                Ok(msg) => handler(Ok(msg)),
-                Err(Error::Tungstenite(tungstenite::Error::Io(err)))
-                    if matches!(err.kind(), std::io::ErrorKind::WouldBlock) =>
-                {
-                    // backoff
-                    // TODO: opt spinning for minimal latency
-                    backoff.snooze();
-                    continue;
-                }
-                Err(err) => handler(Err(err)),
-            }
-        }
+    fn is_private(&self) -> bool {
+        Self::AUTH
     }
-
-    fn conns(&self) -> &[Box<dyn WebsocketConn>];
-    fn conns_mut(&mut self) -> &mut Vec<Box<dyn WebsocketConn>>;
 }
 
 #[async_trait::async_trait]
 pub trait AsyncWebsocketSession
 where
-    Self: Send + Sync + WebsocketSession,
+    Self: Send + Sync,
 {
     type Client: AsyncWebsocketClient + Send;
 
-    async fn spawn(
+    async fn auth(&self, client: &mut Self::Client, options: Options) -> Result<()> {
+        client.try_auth(options).await
+    }
+    async fn subscribe_channel(
+        &self,
+        client: &mut Self::Client,
+        channel: impl WebsocketChannel + Send,
+    ) -> Result<()> {
+        client.send(&channel.subscribe_message()).await
+    }
+
+    fn multiplex<I: Send, O: Send + From<I>>(
         &mut self,
-        mut client: Box<<Self as AsyncWebsocketSession>::Client>,
-        inbound: tokio::sync::mpsc::Sender<Message>,
+        mut r#in: impl Inbound<Value = I> + Send + 'static,
+        mut out: impl Outbound<Value = O> + Send + 'static,
     ) {
-        let (outbound, mut outbound_recv) = tokio::sync::mpsc::channel(1024);
-        for conn in self.conns() {
-            if let Err(err) = conn.subscribe_async(&outbound).await {
-                panic!("{}", err)
-            }
-        }
-
-        loop {
-            tokio::select! {
-                Some(msg) = outbound_recv.recv() => {
-                    client.send(&msg).await.unwrap();
-                },
-                result = client.next() => {
-                    match result {
-                        Ok(msg) => inbound.send(msg).await.unwrap(),
-                        Err(_err) => todo!()
-                    }
+        tokio::task::spawn(async move {
+            loop {
+                match r#in.inbound().await {
+                    Ok(Some(msg)) => out.outbound(msg.into()).await.unwrap(),
+                    Ok(None) => {}
+                    Err(err) => log::error!("{}", err),
                 }
-                else => continue,
             }
+        });
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct Subscriptions {}
+
+#[async_trait::async_trait]
+pub trait Outbound {
+    type Value;
+    async fn outbound(&mut self, msg: Self::Value) -> Result<()>;
+}
+
+pub trait OutboundSync {
+    type Value;
+    fn outbound(&mut self, msg: Self::Value) -> Result<()>;
+}
+
+impl<T> OutboundSync for std::sync::mpsc::Sender<T> {
+    type Value = T;
+
+    fn outbound(&mut self, msg: Self::Value) -> Result<()> {
+        self.send(msg).map_err(|err| Error::Other("sync channel dropped".into()))
+    }
+}
+
+impl<T> OutboundSync for crossbeam_channel::Sender<T> {
+    type Value = T;
+
+    fn outbound(&mut self, msg: Self::Value) -> Result<()> {
+        self.try_send(msg).map_err(|err| Error::Other("sync channel dropped".into()))
+    }
+}
+
+#[async_trait::async_trait]
+pub trait Inbound {
+    type Value;
+    async fn inbound(&mut self) -> Result<Option<Self::Value>>;
+}
+#[async_trait::async_trait]
+impl Outbound for TokioSink {
+    type Value = tungstenite::Message;
+
+    async fn outbound(&mut self, msg: Self::Value) -> Result<()> {
+        self.send(msg).await.map_err(Error::Tungstenite)
+    }
+}
+
+#[async_trait::async_trait]
+impl<T> Outbound for tokio::sync::mpsc::Sender<T>
+where
+    T: Send,
+{
+    type Value = T;
+
+    async fn outbound(&mut self, msg: T) -> Result<()> {
+        self.send(msg)
+            .await
+            .map_err(|err| Error::Other(err.to_string()))
+    }
+}
+
+#[async_trait::async_trait]
+impl Inbound for TokioStream {
+    type Value = tungstenite::Message;
+
+    async fn inbound(&mut self) -> Result<Option<Self::Value>> {
+        match self.try_next().await {
+            Ok(msg) => Ok(msg),
+            Err(err) => Err(Error::Tungstenite(err)),
         }
     }
 }
 
-pub struct Subscriptions {
-    pub channels: Vec<Box<dyn WebsocketConn>>,
-}
+#[async_trait::async_trait]
+impl Inbound for tokio::sync::mpsc::Receiver<tungstenite::Message> {
+    type Value = tungstenite::Message;
 
-impl WebsocketSession for Subscriptions {
-    type Client = self::sync::OKXWebsocketClient;
-
-    fn conns(&self) -> &[Box<dyn WebsocketConn>] {
-        &self.channels
-    }
-
-    fn conns_mut(&mut self) -> &mut Vec<Box<dyn WebsocketConn>> {
-        &mut self.channels
+    async fn inbound(&mut self) -> Result<Option<Self::Value>> {
+        match self.recv().await {
+            None => Ok(None),
+            Some(msg) => Ok(Some(msg)),
+        }
     }
 }
 
+#[async_trait::async_trait]
 impl AsyncWebsocketSession for Subscriptions {
     type Client = async_client::OKXWebsocketClient;
 }
 
-pub mod sync {
-    use super::Error;
-    use super::Result;
-    use crate::websocket::{Message, WebsocketClient};
-    use log::info;
-    use std::net::TcpStream;
-    use tungstenite::stream::NoDelay;
-    use tungstenite::{client::connect_with_config, stream::MaybeTlsStream, WebSocket};
-    use url::Url;
-
-    pub struct OKXWebsocketClient {
-        socket: WebSocket<MaybeTlsStream<TcpStream>>,
-    }
-
-    impl OKXWebsocketClient {
-        pub fn new(url: Url) -> Result<Self> {
-            let socket = match connect_with_config(url, None, 3) {
-                Ok((mut socket, response)) => {
-                    info!("Connected to the server");
-                    info!("Response HTTP code: {}", response.status());
-                    info!("Response contains the following headers:");
-
-                    // make nodelay
-                    socket.get_mut().set_nodelay(true)?;
-                    // make nonblocking
-                    match socket.get_mut() {
-                        MaybeTlsStream::Plain(s) => {
-                            s.set_nonblocking(true)?;
-                        }
-                        MaybeTlsStream::NativeTls(s) => {
-                            s.get_mut().set_nonblocking(true)?;
-                        }
-                        _ => unimplemented!("tls stream type not supported yet"),
-                    }
-                    socket
-                }
-                Err(err) => {
-                    return Err(Error::Tungstenite(err));
-                }
-            };
-
-            Ok(Self { socket })
-        }
-    }
-
-    impl WebsocketClient for OKXWebsocketClient {
-        fn send(&mut self, msg: &str) -> Result<()> {
-            info!("send: {}", msg);
-            self.socket
-                .send(tungstenite::Message::Text(msg.to_string()))
-                .map_err(Error::Tungstenite)
-        }
-
-        fn next(&mut self) -> Result<Message> {
-            match self.socket.read() {
-                Ok(tungstenite::Message::Text(msg)) => Ok(Message::Data(msg)),
-                Ok(msg) => Err(Error::Other(format!("unknown message: {}", msg))),
-                Err(err) => Err(Error::Tungstenite(err)),
-            }
-        }
-    }
-}
-
 pub mod async_client {
-    use super::{Error, Result};
-    use crate::websocket::{AsyncWebsocketClient, Message};
-    use futures_util::stream::{SplitSink, SplitStream};
+    use std::os::fd::{AsRawFd, RawFd};
+
     use futures_util::{SinkExt, StreamExt};
     use log::info;
+    use serde_json::json;
     use tokio::net::TcpStream;
     use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
     use url::Url;
 
+    use crate::api::credential::Credential;
+    use crate::api::options::Options;
+    use crate::websocket::{AsyncWebsocketClient, Message};
+
+    use super::{Error, Result, TokioSink, TokioStream};
+
     pub struct OKXWebsocketClient {
-        pub write: SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, tungstenite::Message>,
-        pub read: SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>,
+        // pub write: SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, tungstenite::Message>,
+        // pub read: SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>,
+        socket: WebSocketStream<MaybeTlsStream<TcpStream>>,
     }
 
     impl OKXWebsocketClient {
@@ -293,28 +249,74 @@ pub mod async_client {
                 }
                 Err(err) => panic!("unhandled err: {}", err),
             };
-            let (write, read) = socket.split();
-            Ok(Self { write, read })
+            Ok(Self { socket })
         }
     }
 
     #[async_trait::async_trait]
     impl AsyncWebsocketClient for OKXWebsocketClient {
-        async fn next(&mut self) -> Result<Message> {
-            match self.read.next().await {
-                None => Err(Error::Other("NoData".to_string())),
-                Some(Ok(tungstenite::Message::Text(msg))) => Ok(Message::Data(msg)),
-                Some(Ok(_)) => Err(Error::Other("unhandled message type".to_string())),
-                Some(Err(err)) => Err(Error::Tungstenite(err)),
-            }
+        type Sink = TokioSink;
+        type Stream = TokioStream;
+
+        async fn try_auth(&mut self, options: Options) -> Result<()> {
+            let credential: Credential = match (&options).try_into() {
+                Ok(credential) => credential,
+                Err(_) => todo!(),
+            };
+            let timestamp = format!("{}", chrono::Utc::now().timestamp_millis() / 1000);
+            let (key, signature) =
+                credential.signature_ws(reqwest::Method::GET, &timestamp, "/users/self/verify");
+            let auth_msg = json!({
+                "op": "login",
+                "args": [
+                    {
+                      "apiKey": key,
+                      "passphrase": options.passphrase.unwrap(),
+                      "timestamp": timestamp,
+                      "sign": signature,
+                    }
+                ]
+            })
+            .to_string();
+            // send auth message
+            self.send(&auth_msg).await?;
+            self.next().await?;
+            Ok(())
         }
 
         async fn send(&mut self, msg: &str) -> Result<()> {
-            info!("send: {}", msg);
-            self.write
+            log::info!("send: {}", msg);
+            self.socket
                 .send(tungstenite::Message::Text(msg.to_string()))
                 .await
                 .map_err(Error::Tungstenite)
+        }
+
+        async fn next(&mut self) -> Result<Option<Message>> {
+            match self.socket.next().await {
+                Some(Ok(tungstenite::Message::Text(msg))) => Ok(Some(Message::Data(msg))),
+                Some(Ok(_)) => Err(Error::Other("unhandled message type".to_string())),
+                Some(Err(err)) => Err(Error::Tungstenite(err)),
+                None => Ok(None),
+            }
+        }
+
+        async fn quick_ack(&mut self) {
+            todo!()
+        }
+
+        fn split(self) -> (Self::Sink, Self::Stream) {
+            self.socket.split()
+        }
+
+        fn fd(&self) -> RawFd {
+            match self.socket.get_ref() {
+                MaybeTlsStream::Plain(raw) => raw.as_raw_fd(),
+                MaybeTlsStream::NativeTls(stream) => {
+                    stream.get_ref().get_ref().get_ref().as_raw_fd()
+                }
+                _ => unimplemented!(),
+            }
         }
     }
 }

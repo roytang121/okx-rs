@@ -1,40 +1,34 @@
-use log::logger;
-use okx_rs::api::v5::websocket::{IndexTickers, Instruments, MarkPrices};
-use okx_rs::api::v5::ws_convert::OKXWsConvert;
-use okx_rs::api::v5::InstrumentType;
-use okx_rs::websocket::async_client::OKXWebsocketClient;
-use okx_rs::websocket::conn::Books5;
-use okx_rs::websocket::{
-    AsyncWebsocketSession, Message, PublicChannel, Subscriptions, WebsocketSession,
-};
 use url::Url;
+
+use okx_rs::api::v5::InstrumentType::{Futures, Spot, Swap};
+use okx_rs::api::v5::websocket::{Instruments, MarkPrices};
+use okx_rs::api::v5::ws_convert::OKXWsConvert;
+use okx_rs::websocket::{
+    AsyncWebsocketSession, Message, Subscriptions,
+};
+use okx_rs::websocket::async_client::OKXWebsocketClient;
+use okx_rs::websocket::AsyncWebsocketClient;
 
 #[tokio::main]
 async fn main() {
-    let client = OKXWebsocketClient::new(Url::parse("wss://ws.okx.com:8443/ws/v5/public").unwrap())
+    let mut client = OKXWebsocketClient::new(Url::parse("wss://ws.okx.com:8443/ws/v5/public").unwrap())
         .await
         .unwrap();
-    let mut session = Subscriptions {
-        channels: vec![
-            PublicChannel::new(Instruments(InstrumentType::Futures)),
-            PublicChannel::new(IndexTickers("BTC-USDT".to_string())),
-            PublicChannel::new(MarkPrices("BTC-USDT-SWAP".to_string())),
-        ],
-    };
-    // session.start(Box::new(client), |message| {
-    //     println!("message: {:?}", message);
-    // });
-    let (inbound, mut inbound_recv) = tokio::sync::mpsc::channel(1024);
-    let handle = tokio::spawn(async move { session.spawn(Box::new(client), inbound).await });
+    let session = Subscriptions::default();
+    session.subscribe_channel(&mut client, Instruments(Futures)).await.unwrap();
+    session.subscribe_channel(&mut client, Instruments(Swap)).await.unwrap();
+    session.subscribe_channel(&mut client, Instruments(Spot)).await.unwrap();
+    let mut ping = tokio::time::interval(tokio::time::Duration::from_secs(5));
+
     loop {
-        match inbound_recv.recv().await {
-            None => {}
-            Some(Message::Data(msg)) => {
-                if let Some(mark_prices) = OKXWsConvert::try_parse_mark_prices(&msg) {
-                    println!("{:?}", mark_prices)
-                }
+        let data = tokio::select! {
+            res = client.next() => res,
+            _ = ping.tick() => {
+                client.send("ping".into()).await.unwrap();
+                continue
             }
-            _ => {}
-        }
+            else => continue
+        };
+        println!("{:?}", data);
     }
 }
