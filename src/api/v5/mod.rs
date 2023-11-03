@@ -21,8 +21,10 @@ pub use self::funding_account::transfer::*;
 pub use self::funding_account::withdrawal::*;
 // re-export trading_account module
 pub use self::trading_account::*;
+pub use self::trading_account::websocket::*;
 // re-export public data module
 pub use self::public_data::*;
+pub use self::public_data::websocket::*;
 // re-export trading module
 pub use self::orderbook_trading::fill::*;
 pub use self::orderbook_trading::market_data::*;
@@ -49,11 +51,12 @@ pub struct ApiResponse<T> {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct WsResponse<'a, A: Debug, T: Debug> {
     pub arg: A,
+    pub code: Option<u32>,
+    pub conn_id: Option<&'a str>,
     pub event: Option<&'a str>,
-    // pub data: Option<Vec<T>>,
-    // pub data: Option<&'a T>,
     pub action: Option<&'a str>,
     pub data: Option<T>,
     pub msg: Option<&'a str>,

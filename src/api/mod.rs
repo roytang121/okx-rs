@@ -150,13 +150,14 @@ impl Rest {
                         Ok(data)
                     } else {
                         Err(Error::Api(ApiError {
-                            code: 0,
-                            msg: "Success but empty response".to_owned(),
+                            code: Some(code),
+                            msg: Some("Success but empty response".to_owned()),
                             data: None,
+                            connId: None,
                         }))
                     }
                 }
-                code => Err(Error::Api(ApiError { code, msg, data })),
+                code => Err(Error::Api(ApiError { code: Some(code), msg: Some(msg), data, connId: None })),
             },
             Err(e) => {
                 log::debug!("{}", String::from_utf8_lossy(&body));

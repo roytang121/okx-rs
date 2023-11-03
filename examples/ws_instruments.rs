@@ -1,10 +1,9 @@
 use url::Url;
 
 use okx_rs::api::v5::InstrumentType::{Futures, Spot, Swap};
-use okx_rs::api::v5::websocket::{Instruments, MarkPrices};
-use okx_rs::api::v5::ws_convert::OKXWsConvert;
+use okx_rs::api::v5::websocket::Instruments;
 use okx_rs::websocket::{
-    AsyncWebsocketSession, Message, Subscriptions,
+    AsyncWebsocketSession, Subscriptions,
 };
 use okx_rs::websocket::async_client::OKXWebsocketClient;
 use okx_rs::websocket::AsyncWebsocketClient;

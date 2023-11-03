@@ -112,7 +112,7 @@ macro_rules! impl_string_enum {
                     $(
                         $variant_str => { return std::result::Result::Ok(Self::$variant) }
                     ),*,
-                    other => { return std::result::Result::Ok(Self::$wildcard(other.to_string())) }
+                    other => { return std::result::Result::Ok(Self::$wildcard(other.into())) }
                 }
             }
         }
@@ -172,20 +172,6 @@ macro_rules! impl_string_enum {
 
         $crate::impl_serde_from_str!($name);
     };
-}
-
-pub fn serialize_as_str_opt<S, T>(dt: &Option<T>, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-    T: std::fmt::Display,
-{
-    use serde::ser::Error;
-
-    if let Some(dt) = dt {
-        serializer.serialize_str(&dt.to_string())
-    } else {
-        Err(S::Error::custom("Empty option"))
-    }
 }
 
 pub fn serialize_as_str<S, T>(dt: &T, serializer: S) -> Result<S::Ok, S::Error>

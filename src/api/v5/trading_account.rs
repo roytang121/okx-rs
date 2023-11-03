@@ -63,10 +63,7 @@ mod tests_get_trading_balances {
 #[derive(Debug, Serialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct GetPositions {
-    #[serde(
-        serialize_with = "crate::serde_util::serialize_as_str_opt",
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub inst_type: Option<InstrumentType>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub inst_id: Option<String>,
@@ -102,10 +99,7 @@ pub struct GetInterestAccrued {
     after: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     before: Option<String>,
-    #[serde(
-        serialize_with = "crate::serde_util::serialize_as_str_opt",
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(skip_serializing_if = "Option::is_none")]
     mgn_mode: Option<MarginMode>,
 }
 
@@ -133,34 +127,101 @@ impl Request for GetInterestLimits {
     type Response = Vec<InterestLimitResponse>;
 }
 
-#[derive(Debug, Deserialize)]
-pub struct AccountChannel;
+pub mod websocket {
+    use crate::api::v5::BalanceAndPositionDetail;
+    use super::*;
+    #[derive(Debug, Deserialize)]
+    pub struct AccountChannel;
 
-impl WebsocketChannel for AccountChannel {
-    const AUTH: bool = true;
-    type Response<'de> = [TradingBalanceDetail; 1];
-    type ArgType<'de> = ChannelArg<'de>;
-
-    const CHANNEL: &'static str = "account";
-
-    fn subscribe_message(&self) -> String {
-        json!({
-            "op": "subscribe",
-            "args": [
-                {
-                    "channel": Self::CHANNEL,
-                    "extraParams": "
+    impl WebsocketChannel for AccountChannel {
+        const CHANNEL: &'static str = "account";
+        const AUTH: bool = true;
+        type Response<'de> = Vec<TradingBalanceDetail>;
+        type ArgType<'de> = ChannelArg<'de>;
+        fn subscribe_message(&self) -> String {
+            json!({
+                "op": "subscribe",
+                "args": [
+                    {
+                        "channel": Self::CHANNEL,
+                        "extraParams": "
                         {
                           \"updateInterval\": \"1\"
                         }
                     "
-                }
-            ]
-        })
-        .to_string()
+                    }
+                ]
+            })
+            .to_string()
+        }
     }
 
-    fn unsubscribe_message(&self) -> String {
-        todo!()
+    #[derive(Debug, Serialize, Deserialize)]
+    pub struct PositionsArg<'a> {
+        channel: &'a str,
+        /// Instrument type
+        /// MARGIN
+        /// SWAP
+        /// FUTURES
+        /// OPTION
+        /// ANY
+        #[serde(skip_serializing_if = "Option::is_none")]
+        inst_type: Option<InstrumentType>,
+        /// Instrument family
+        /// Applicable to FUTURES/SWAP/OPTION
+        #[serde(borrow, skip_serializing_if = "Option::is_none")]
+        inst_family: Option<&'a str>,
+        #[serde(borrow, skip_serializing_if = "Option::is_none")]
+        inst_id: Option<&'a str>,
+    }
+
+    #[derive(Debug, Serialize, Deserialize)]
+    pub struct PositionsChannel {
+        /// Instrument type
+        /// MARGIN
+        /// SWAP
+        /// FUTURES
+        /// OPTION
+        /// ANY
+        // #[serde(default, skip_serializing_if = "Option::is_none")]
+        pub inst_type: InstrumentType,
+        /// Instrument family
+        /// Applicable to FUTURES/SWAP/OPTION
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        pub inst_family: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        pub inst_id: Option<String>,
+    }
+
+    impl WebsocketChannel for PositionsChannel {
+        const CHANNEL: &'static str = "positions";
+        const AUTH: bool = true;
+        type Response<'de> = Vec<PositionDetail>;
+        type ArgType<'de> = PositionsArg<'de>;
+
+        fn subscribe_message(&self) -> String {
+            json!({
+                "op": "subscribe",
+                "args": [
+                    {
+                        "channel": Self::CHANNEL,
+                        "instType": self.inst_type,
+                        "instId": self.inst_id,
+                        "instFamily": self.inst_family,
+                    }
+                ]
+            })
+            .to_string()
+        }
+    }
+
+    #[derive(Debug, Serialize, Deserialize)]
+    pub struct BalanceAndPositionChannel;
+
+    impl WebsocketChannel for BalanceAndPositionChannel {
+        const CHANNEL: &'static str = "balance_and_position";
+        const AUTH: bool = true;
+        type Response<'de> = [BalanceAndPositionDetail; 1];
+        type ArgType<'de> = ChannelArg<'de>;
     }
 }

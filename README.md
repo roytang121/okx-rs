@@ -84,9 +84,9 @@ async fn main() {
 <details>
   <summary>Websocket</summary>
 
-- [ ] WS / Account channel
-- [ ] WS / Positions channel
-- [ ] WS / Balance and position channel
+- [x] WS / Account channel
+- [x] WS / Positions channel
+- [x] WS / Balance and position channel
 - [ ] WS / Position risk warning
 - [ ] WS / Account greeks channel
 

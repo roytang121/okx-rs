@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use crate::api::v5::DepositStatus;
 use crate::impl_string_enum;
 use crate::serde_util::*;
@@ -5,8 +6,9 @@ use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use rust_decimal::Decimal;
 use serde::de::{Error, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
-use std::fmt::Formatter;
+use std::fmt::{Display, Formatter};
 use std::str::FromStr;
+use crate::time::UTCDateTime;
 
 impl_string_enum!(InstrumentType,
     Spot => "SPOT",
@@ -14,6 +16,7 @@ impl_string_enum!(InstrumentType,
     Swap => "SWAP",
     Futures => "FUTURES",
     Option => "OPTION",
+    Any => "ANY",
 );
 impl_string_enum!(Side,
     Buy => "buy",
@@ -128,6 +131,7 @@ pub enum InstrumentType {
     Swap,
     Futures,
     Option,
+    Any,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -603,8 +607,8 @@ pub struct PositionDetail {
     #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub usd_px: Option<Decimal>,
     /// Breakeven price
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
-    pub be_px: Option<Decimal>,
+    #[serde(rename = "be_px", default, deserialize_with = "deserialize_from_opt_str")]
+    pub breakeven_price: Option<Decimal>,
     #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub delta_bs: Option<Decimal>,
     #[serde(default, deserialize_with = "deserialize_from_opt_str")]
@@ -654,6 +658,112 @@ pub struct PositionDetail {
     /// Creation time, Unix timestamp format in milliseconds, e.g. 1597026383085
     #[serde(deserialize_with = "deserialize_timestamp")]
     pub c_time: DateTime<Utc>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct BalanceAndPositionDetail {
+    /// Push time of both balance and position information, millisecond format of Unix timestamp, e.g. 1597026383085
+    #[serde(deserialize_with = "deserialize_timestamp")]
+    p_time: UTCDateTime,
+    /// Event Type
+    /// snapshot,delivered,exercised,transferred,filled,liquidation,claw_back,adl,funding_fee,adjust_margin,set_leverage,interest_deduction
+    pub event_type: BalanceAndPositionEventType,
+    // /// Balance data
+    pub bal_data: Vec<BalanceData>,
+    // /// Position data
+    pub pos_data: Vec<PosData>,
+    // /// Details of trade
+    pub trades: Vec<TradeData>,
+}
+
+#[derive(Debug, Clone)]
+pub enum BalanceAndPositionEventType {
+    Snapshot,
+    Delivered,
+    Exercised,
+    Transferred,
+    Filled,
+    Liquidation,
+    ClawBack,
+    Adl,
+    FundingFee,
+    AdjustMargin,
+    SetLeverage,
+    InterestDeduction,
+    Other(String),
+}
+impl_string_enum!(BalanceAndPositionEventType,
+    Other,
+    Snapshot => "snapshot",
+    Delivered => "delivered",
+    Exercised => "exercised",
+    Transferred => "transferred",
+    Filled => "filled",
+    Liquidation => "liquidation",
+    ClawBack => "claw_back",
+    Adl => "adl",
+    FundingFee => "funding_fee",
+    AdjustMargin => "adjust_margin",
+    SetLeverage => "set_leverage",
+    InterestDeduction => "interest_deduction",
+);
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct BalanceData {
+    pub ccy: String,
+    pub cash_bal: Decimal,
+    #[serde(deserialize_with = "deserialize_timestamp")]
+    pub u_time: UTCDateTime,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct PosData {
+    /// Position ID
+    pub pos_id: String,
+    /// Last trade ID
+    pub trade_id: String,
+    /// Instrument ID, e.g BTC-USD-180213
+    pub inst_id: String,
+    /// Instrument type
+    pub inst_type: InstrumentType,
+    /// Margin mode
+    /// isolated, cross
+    pub mgn_mode: MarginMode,
+    /// Position side
+    /// long, short, net
+    pub pos_side: PositionSide,
+    /// Quantity of positions. In the mode of autonomous transfer from position to position, after the deposit is transferred, a position with pos of 0 will be generated
+    pub pos: Decimal,
+    /// Base currency balance, only applicable to MARGIN（Manual transfers and Quick Margin Mode
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub base_bal: Option<Decimal>,
+    /// Quote currency balance, only applicable to MARGIN（Manual transfers and Quick Margin Mode
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub quote_bal: Option<Decimal>,
+    /// Currency
+    pub ccy: String,
+    /// Position currency, only applicable to MARGIN positions.
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub pos_ccy: Option<String>,
+    /// Average open price
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub avg_px: Option<Decimal>,
+    /// Update time, Unix timestamp format in milliseconds, e.g. 1597026383085
+    #[serde(deserialize_with = "deserialize_timestamp")]
+    pub u_time: UTCDateTime,
+}
+
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TradeData {
+    /// Instrument ID, e.g. BTC-USDT
+    pub inst_id: String,
+    /// Trade ID
+    pub trade_id: String,
 }
 
 #[derive(Debug, Deserialize, Clone)]

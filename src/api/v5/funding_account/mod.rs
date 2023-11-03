@@ -137,15 +137,9 @@ pub struct AccountAssetValuationDetails {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct GetAccountBills {
-    #[serde(
-        skip_serializing_if = "Option::is_none",
-        serialize_with = "crate::serde_util::serialize_as_str_opt"
-    )]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub r#type: Option<AccountBillType>,
-    #[serde(
-        skip_serializing_if = "Option::is_none",
-        serialize_with = "crate::serde_util::serialize_as_str_opt"
-    )]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub sub_type: Option<AccountBillSubType>,
 }
 

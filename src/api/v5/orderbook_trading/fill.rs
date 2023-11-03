@@ -30,10 +30,7 @@ impl FromStr for ExecType {
 #[derive(Debug, Serialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct GetFillHistory {
-    #[serde(
-        skip_serializing_if = "Option::is_none",
-        serialize_with = "crate::serde_util::serialize_as_str_opt"
-    )]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub inst_type: Option<InstrumentType>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub uly: Option<String>,

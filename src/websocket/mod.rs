@@ -1,8 +1,8 @@
 use std::fmt::Debug;
 use std::os::fd::RawFd;
 
-use futures_util::{SinkExt, Stream, StreamExt, TryFutureExt, TryStreamExt};
 use futures_util::stream::{SplitSink, SplitStream};
+use futures_util::{SinkExt, Stream, StreamExt, TryFutureExt, TryStreamExt};
 use serde::Deserialize;
 use tokio::net::TcpStream;
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
@@ -73,8 +73,29 @@ pub trait WebsocketChannel: Send + Sync {
     type Response<'de>: Deserialize<'de> + Debug;
     type ArgType<'de>: Deserialize<'de> + Debug;
 
-    fn subscribe_message(&self) -> String;
-    fn unsubscribe_message(&self) -> String;
+    fn subscribe_message(&self) -> String {
+        serde_json::json!({
+            "op": "subscribe",
+            "args": [
+                {
+                    "channel": Self::CHANNEL,
+                }
+            ]
+        })
+        .to_string()
+    }
+
+    fn unsubscribe_message(&self) -> String {
+        serde_json::json!({
+            "op": "unsubscribe",
+            "args": [
+                {
+                    "channel": Self::CHANNEL,
+                }
+            ]
+        })
+        .to_string()
+    }
     fn is_private(&self) -> bool {
         Self::AUTH
     }
@@ -85,14 +106,16 @@ pub trait AsyncWebsocketSession
 where
     Self: Send + Sync,
 {
-    type Client: AsyncWebsocketClient + Send;
-
-    async fn auth(&self, client: &mut Self::Client, options: Options) -> Result<()> {
+    async fn auth(
+        &self,
+        client: &mut (impl AsyncWebsocketClient + Send),
+        options: Options,
+    ) -> Result<()> {
         client.try_auth(options).await
     }
     async fn subscribe_channel(
         &self,
-        client: &mut Self::Client,
+        client: &mut (impl AsyncWebsocketClient + Send),
         channel: impl WebsocketChannel + Send,
     ) -> Result<()> {
         client.send(&channel.subscribe_message()).await
@@ -115,9 +138,6 @@ where
     }
 }
 
-#[derive(Debug, Default)]
-pub struct Subscriptions {}
-
 #[async_trait::async_trait]
 pub trait Outbound {
     type Value;
@@ -133,7 +153,8 @@ impl<T> OutboundSync for std::sync::mpsc::Sender<T> {
     type Value = T;
 
     fn outbound(&mut self, msg: Self::Value) -> Result<()> {
-        self.send(msg).map_err(|err| Error::Other("sync channel dropped".into()))
+        self.send(msg)
+            .map_err(|err| Error::Other("sync channel dropped".into()))
     }
 }
 
@@ -141,7 +162,8 @@ impl<T> OutboundSync for crossbeam_channel::Sender<T> {
     type Value = T;
 
     fn outbound(&mut self, msg: Self::Value) -> Result<()> {
-        self.try_send(msg).map_err(|err| Error::Other("sync channel dropped".into()))
+        self.try_send(msg)
+            .map_err(|err| Error::Other("sync channel dropped".into()))
     }
 }
 
@@ -197,10 +219,9 @@ impl Inbound for tokio::sync::mpsc::Receiver<tungstenite::Message> {
     }
 }
 
-#[async_trait::async_trait]
-impl AsyncWebsocketSession for Subscriptions {
-    type Client = async_client::OKXWebsocketClient;
-}
+#[derive(Debug, Default)]
+pub struct Subscriptions {}
+impl AsyncWebsocketSession for Subscriptions {}
 
 pub mod async_client {
     use std::os::fd::{AsRawFd, RawFd};

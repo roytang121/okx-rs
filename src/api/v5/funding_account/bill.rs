@@ -477,61 +477,29 @@ pub struct AccountBill {
     pub exec_type: Option<ExecType>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AccountBillType {
     InterestDeduction, // 7
     FundingFee,        // 8
+    Other(String),
 }
+impl_string_enum!(AccountBillType,
+    Other,
+    InterestDeduction => "7",
+    FundingFee => "8",
+);
 
-impl FromStr for AccountBillType {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(match s {
-            "7" => Self::InterestDeduction,
-            "8" => Self::FundingFee,
-            other => bail!("unhandled bill type {}", other),
-        })
-    }
-}
-
-impl std::fmt::Display for AccountBillType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            AccountBillType::InterestDeduction => write!(f, "7"),
-            AccountBillType::FundingFee => write!(f, "8"),
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AccountBillSubType {
     InterestDeductionForMarketLoans, // 9
     FundingFeeExpense,               // 173
     FundingFeeIncome,                // 174
+    Other(String),
 }
 
-impl FromStr for AccountBillSubType {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(match s {
-            "9" => Self::InterestDeductionForMarketLoans,
-            "173" => Self::FundingFeeExpense,
-            "174" => Self::FundingFeeIncome,
-            other => bail!("unhandled bill sub_type {}", other),
-        })
-    }
-}
-
-impl std::fmt::Display for AccountBillSubType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            AccountBillSubType::InterestDeductionForMarketLoans => write!(f, "9"),
-            AccountBillSubType::FundingFeeExpense => write!(f, "173"),
-            AccountBillSubType::FundingFeeIncome => write!(f, "174"),
-        }
-    }
-}
+impl_string_enum!(AccountBillSubType,
+    Other,
+    InterestDeductionForMarketLoans => "9",
+    FundingFeeExpense => "173",
+    FundingFeeIncome => "174",
+);

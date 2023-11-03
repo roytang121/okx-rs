@@ -80,10 +80,7 @@ pub struct PlaceOrder {
     /// The default is net in the net mode
     /// It is required in the long/short mode, and can only be long or short.
     /// Only applicable to FUTURES/SWAP.
-    #[serde(
-        serialize_with = "crate::serde_util::serialize_as_str_opt",
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub pos_side: Option<PositionSide>,
     /// Order type
     /// market: Market order
@@ -112,10 +109,7 @@ pub struct PlaceOrder {
     /// base_ccy: Base currency ,quote_ccy: Quote currency
     /// Only applicable to SPOT Market Orders
     /// Default is quote_ccy for buy, base_ccy for sell
-    #[serde(
-        serialize_with = "crate::serde_util::serialize_as_str_opt",
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub tgt_ccy: Option<QuantityType>,
     /// Whether to disallow the system from amending the size of the SPOT Market Order.
     /// Valid options: true or false. The default value is false.
@@ -299,24 +293,15 @@ impl Request for GetOrderDetails {
 #[derive(Debug, Clone, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct GetOrderList {
-    #[serde(
-        serialize_with = "crate::serde_util::serialize_as_str_opt",
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub inst_type: Option<InstrumentType>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub uly: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub inst_id: Option<String>,
-    #[serde(
-        serialize_with = "crate::serde_util::serialize_as_str_opt",
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub ord_type: Option<OrderType>,
-    #[serde(
-        serialize_with = "crate::serde_util::serialize_as_str_opt",
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub state: Option<OrderState>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub after: Option<String>,

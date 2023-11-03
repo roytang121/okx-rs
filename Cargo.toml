@@ -14,7 +14,6 @@ readme = "./README.md"
 [dependencies]
 reqwest = { version = "0.11.22", features = ["json"] }
 base64 = "0.13.0"
-ring = "0.16.20"
 thiserror = "1"
 chrono = { version = "0.4", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
@@ -26,8 +25,21 @@ log = "0.4.20"
 tungstenite = { version = "0.20.1", features = ["native-tls"] }
 tokio-tungstenite = { version = "*", features = ["native-tls"] }
 url = "2.4.1"
-crossbeam-utils = "0.8.16"
 async-trait = "0.1.73"
 futures-util = "0.3.28"
 tokio = { version = "1.0.0", features = ["rt", "rt-multi-thread", "macros"] }
+sha2 = { version = "0.10", default-features = false }
+digest = { version = "0.10", features = ["dev"] }
+hmac = { version = "0.12.1", features = [] }
+simd-json = {  version = "0.13.4" , features = ["runtime-detection", "known-key"]}
+crossbeam-channel = "0.5.8"
+const_format = "0.2"
+
+#[dev-dependencies]
 dotenv = "0.15.0"
+env_logger = { version = "0.10.0", features = [] }
+
+[features]
+default = []
+vip = []
+simd = []
