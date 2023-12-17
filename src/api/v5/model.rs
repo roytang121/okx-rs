@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use crate::api::v5::DepositStatus;
 use crate::impl_string_enum;
 use crate::serde_util::*;
@@ -664,7 +663,6 @@ pub struct PositionDetail {
 #[serde(rename_all = "camelCase")]
 pub struct BalanceAndPositionDetail {
     /// Push time of both balance and position information, millisecond format of Unix timestamp, e.g. 1597026383085
-    #[serde(deserialize_with = "deserialize_timestamp")]
     p_time: UTCDateTime,
     /// Event Type
     /// snapshot,delivered,exercised,transferred,filled,liquidation,claw_back,adl,funding_fee,adjust_margin,set_leverage,interest_deduction
@@ -714,7 +712,6 @@ impl_string_enum!(BalanceAndPositionEventType,
 pub struct BalanceData {
     pub ccy: String,
     pub cash_bal: Decimal,
-    #[serde(deserialize_with = "deserialize_timestamp")]
     pub u_time: UTCDateTime,
 }
 
@@ -752,7 +749,6 @@ pub struct PosData {
     #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub avg_px: Option<Decimal>,
     /// Update time, Unix timestamp format in milliseconds, e.g. 1597026383085
-    #[serde(deserialize_with = "deserialize_timestamp")]
     pub u_time: UTCDateTime,
 }
 
@@ -1090,7 +1086,6 @@ impl<'a> Levels<'a> {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BookUpdate<'a> {
-    pub phantom: Option<&'a str>,
     // Checksum
     pub checksum: Option<i64>,
     /// Sequence ID of the current message
@@ -1100,8 +1095,10 @@ pub struct BookUpdate<'a> {
     #[serde(default)]
     pub prev_seq_id: i64,
     /// Order book on sell side
+    #[serde(borrow)]
     pub asks: Levels<'a>,
     /// Order book on bid side
+    #[serde(borrow)]
     pub bids: Levels<'a>,
     #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
     pub ts: i64,
@@ -1114,7 +1111,7 @@ mod test {
     #[test]
     fn size_of_levels() {
         use std::mem::size_of;
-        assert_eq!(size_of::<BookUpdate>(), 480);
+        assert_eq!(size_of::<BookUpdate>(), 536);
     }
 }
 

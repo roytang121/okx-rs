@@ -1,7 +1,7 @@
 use url::Url;
 
 use okx_rs::api::v5::InstrumentType::{Futures, Spot, Swap};
-use okx_rs::api::v5::websocket::Instruments;
+use okx_rs::api::v5::Instruments;
 use okx_rs::websocket::{
     AsyncWebsocketSession, Subscriptions,
 };

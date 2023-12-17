@@ -7,6 +7,7 @@ use crate::websocket::WebsocketChannel;
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use crate::time::UTCDateTime;
 
 use super::ChannelArg;
 
@@ -86,10 +87,26 @@ impl Request for GetPositions {
 /// Rate limit rule: UserID
 /// ### HTTP Request
 /// GET /api/v5/account/positions-history
-///
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct GetPositionsHistory {}
+pub struct GetPositionsHistory {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub inst_type: Option<InstrumentType>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub inst_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mgn_mode: Option<MarginMode>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub r#type: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pos_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub after: Option<UTCDateTime>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub before: Option<UTCDateTime>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit: Option<u32>,
+}
 
 /// https://www.okx.com/docs-v5/en/#rest-api-account-get-interest-accrued-data
 #[derive(Debug, Serialize, Clone, Default)]
