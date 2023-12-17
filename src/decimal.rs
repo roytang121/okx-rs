@@ -2,6 +2,7 @@ use std::ops::Deref;
 use std::str::FromStr;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Deserializer};
+use serde::de::Error;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Fixed(Decimal);
@@ -35,6 +36,12 @@ impl<'de> Deserialize<'de> for Fixed {
                     .map_err(|err| E::custom(format!("invalid decimal {s}. {err}")))?;
                 Ok(Fixed(dec))
             }
+
+            fn visit_string<E>(self, s: String) -> Result<Self::Value, E> where E: Error {
+                let dec = Decimal::from_str(&s)
+                    .map_err(|err| E::custom(format!("invalid decimal {s}. {err}")))?;
+                Ok(Fixed(dec))
+            }
         }
         deserializer.deserialize_str(FixedVisitor)
     }
@@ -46,19 +53,19 @@ mod decimal_tests {
 
     #[test]
     fn test_deser_str() {
-        let dec: Fixed = serde_json::from_str("0.00000001").unwrap();
+        let dec: Fixed = serde_json::from_str("\"0.00000001\"").unwrap();
         assert_eq!(dec, Fixed(Decimal::new(1, 8)));
     }
 
     #[test]
     fn test_deser_opt_str() {
-        let dec: Option<Fixed> = serde_json::from_str("0.00000001").unwrap();
+        let dec: Option<Fixed> = serde_json::from_str("\"0.00000001\"").unwrap();
         assert_eq!(dec, Some(Fixed(Decimal::new(1, 8))));
     }
 
     #[test]
     fn test_deser_empty_str() {
-        let dec: Fixed = serde_json::from_str("").unwrap();
-        assert_eq!(dec, Fixed(Decimal::new(0, 0)));
+        let dec: Option<Fixed> = serde_json::from_str("\"\"").ok();
+        assert_eq!(dec, None);
     }
 }
