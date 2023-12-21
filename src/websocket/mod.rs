@@ -274,6 +274,31 @@ pub mod async_client {
         }
     }
 
+    pub struct OKXAuth;
+    impl OKXAuth {
+        pub fn ws_auth(options: Options) -> Result<String> {
+            let credential: Credential = match (&options).try_into() {
+                Ok(credential) => credential,
+                Err(_) => return Err(Error::Other("invalid credential".to_string())),
+            };
+            let timestamp = format!("{}", chrono::Utc::now().timestamp_millis() / 1000);
+            let (key, signature) =
+                credential.signature_ws(reqwest::Method::GET, &timestamp, "/users/self/verify");
+            Ok(json!({
+                "op": "login",
+                "args": [
+                    {
+                      "apiKey": key,
+                      "passphrase": options.passphrase.unwrap(),
+                      "timestamp": timestamp,
+                      "sign": signature,
+                    }
+                ]
+            })
+                .to_string())
+        }
+    }
+
     #[async_trait::async_trait]
     impl AsyncWebsocketClient for OKXWebsocketClient {
         type Sink = TokioSink;

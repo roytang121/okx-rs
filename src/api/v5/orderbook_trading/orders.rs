@@ -206,7 +206,7 @@ pub struct GetOrderDetails {
     pub cl_ord_id: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Hash)]
 #[serde(rename_all = "camelCase")]
 pub struct OrderDetail {
     #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]

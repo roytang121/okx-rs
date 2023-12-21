@@ -123,7 +123,7 @@ impl_string_enum!(FundTransferState,
     Failed => "failed",
 );
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum InstrumentType {
     Spot,
     Margin,
@@ -133,33 +133,33 @@ pub enum InstrumentType {
     Any,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Side {
     Buy,
     Sell,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum PositionSide {
     Long,
     Short,
     Net,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Hash)]
 pub enum MarginMode {
     Cross,
     Isolated,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Hash)]
 pub enum TradeMode {
     Cross,
     Isolated,
     Cash,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Hash)]
 pub enum OrderType {
     Market,
     Limit,
@@ -169,13 +169,13 @@ pub enum OrderType {
     OptimalLimitIoc,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Hash)]
 pub enum QuantityType {
     BaseCcy,
     QuoteCcy,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Hash)]
 pub enum OrderState {
     Canceled,
     Live,
@@ -183,21 +183,21 @@ pub enum OrderState {
     Filled,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Hash)]
 pub enum TakeProfitTriggerPriceType {
     Last,
     Index,
     Mark,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Hash)]
 pub enum StopLossTriggerPriceType {
     Last,
     Index,
     Mark,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Hash)]
 pub enum Category {
     Normal,
     Twap,
@@ -659,7 +659,7 @@ pub struct PositionDetail {
     pub c_time: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Hash)]
 #[serde(rename_all = "camelCase")]
 pub struct BalanceAndPositionDetail {
     /// Push time of both balance and position information, millisecond format of Unix timestamp, e.g. 1597026383085
@@ -675,7 +675,7 @@ pub struct BalanceAndPositionDetail {
     pub trades: Vec<TradeData>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash)]
 pub enum BalanceAndPositionEventType {
     Snapshot,
     Delivered,
@@ -707,7 +707,7 @@ impl_string_enum!(BalanceAndPositionEventType,
     InterestDeduction => "interest_deduction",
 );
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Hash)]
 #[serde(rename_all = "camelCase")]
 pub struct BalanceData {
     pub ccy: String,
@@ -715,7 +715,7 @@ pub struct BalanceData {
     pub u_time: UTCDateTime,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Hash)]
 #[serde(rename_all = "camelCase")]
 pub struct PosData {
     /// Position ID
@@ -753,7 +753,7 @@ pub struct PosData {
 }
 
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Hash)]
 #[serde(rename_all = "camelCase")]
 pub struct TradeData {
     /// Instrument ID, e.g. BTC-USDT
