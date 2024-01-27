@@ -224,7 +224,7 @@ pub struct OrderDetail {
     #[serde(deserialize_with = "deserialize_from_opt_str")]
     pub px: Option<String>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub sz: Option<Decimal>,
+    pub sz: Option<String>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
     pub pnl: Option<String>,
     pub ord_type: OrderType,
