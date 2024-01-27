@@ -2,7 +2,7 @@ use crate::api::v5::model::{
     Category, InstrumentType, OrderState, OrderType, PositionSide, QuantityType, Side,
     StopLossTriggerPriceType, TakeProfitTriggerPriceType, TradeMode,
 };
-use crate::api::v5::{Request, SelfTradePreventionMode};
+use crate::api::v5::{ExecType, Request, SelfTradePreventionMode};
 use crate::serde_util::{deserialize_from_opt_str, deserialize_timestamp};
 use chrono::{DateTime, Utc};
 use reqwest::Method;
@@ -206,7 +206,7 @@ pub struct GetOrderDetails {
     pub cl_ord_id: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Clone, Hash)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct OrderDetail {
     #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
@@ -227,9 +227,7 @@ pub struct OrderDetail {
     pub sz: Option<Decimal>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
     pub pnl: Option<String>,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
     pub ord_type: OrderType,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
     pub side: Side,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
     pub pos_side: Option<PositionSide>,
@@ -279,6 +277,8 @@ pub struct OrderDetail {
     pub u_time: DateTime<Utc>,
     #[serde(deserialize_with = "deserialize_timestamp")]
     pub c_time: DateTime<Utc>,
+    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub exec_type: Option<ExecType>,
 }
 
 impl Request for GetOrderDetails {
