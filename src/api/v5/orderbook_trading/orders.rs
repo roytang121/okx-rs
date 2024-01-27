@@ -330,7 +330,7 @@ pub mod websocket {
         pub inst_type: InstrumentType,
     }
 
-    pub struct OrdersChannel(InstrumentType);
+    pub struct OrdersChannel(pub InstrumentType);
     impl WebsocketChannel for OrdersChannel {
         const CHANNEL: &'static str = "orders";
         const AUTH: bool = true;
