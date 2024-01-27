@@ -53,7 +53,7 @@ pub struct ApiResponse<T> {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WsResponse<'a, A: Debug, T: Debug> {
-    pub arg: A,
+    pub arg: Option<A>,
     pub code: Option<u32>,
     pub conn_id: Option<&'a str>,
     pub event: Option<&'a str>,
