@@ -227,8 +227,10 @@ pub struct OrderDetail {
     pub sz: Option<String>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
     pub pnl: Option<String>,
-    pub ord_type: OrderType,
-    pub side: Side,
+    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub ord_type: Option<OrderType>,
+    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub side: Option<Side>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
     pub pos_side: Option<PositionSide>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
