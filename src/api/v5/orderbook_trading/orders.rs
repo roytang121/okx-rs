@@ -318,3 +318,37 @@ impl Request for GetOrderList {
 
     type Response = Vec<OrderDetail>;
 }
+
+pub mod websocket {
+    use super::*;
+    use crate::websocket::WebsocketChannel;
+
+    #[derive(Debug, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    pub struct OrdersChannelArg<'a> {
+        pub channel: Option<&'a str>,
+        pub inst_type: InstrumentType,
+    }
+
+    pub struct OrdersChannel(InstrumentType);
+    impl WebsocketChannel for OrdersChannel {
+        const CHANNEL: &'static str = "orders";
+        const AUTH: bool = true;
+        type Response<'de> = Vec<OrderDetail>;
+        type ArgType<'de> = OrdersChannelArg<'de>;
+
+        fn subscribe_message(&self) -> String {
+            let OrdersChannel(inst_type) = self;
+            serde_json::json!({
+                "op": "subscribe",
+                "args": [
+                    {
+                        "channel": Self::CHANNEL,
+                        "instType": inst_type,
+                    }
+                ]
+            })
+            .to_string()
+        }
+    }
+}
