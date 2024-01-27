@@ -222,11 +222,11 @@ pub struct OrderDetail {
     #[serde(deserialize_with = "deserialize_from_opt_str")]
     pub tag: Option<String>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub px: Option<Decimal>,
+    pub px: Option<String>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
     pub sz: Option<Decimal>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub pnl: Option<Decimal>,
+    pub pnl: Option<String>,
     #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
     pub ord_type: OrderType,
     #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
@@ -236,43 +236,43 @@ pub struct OrderDetail {
     #[serde(deserialize_with = "deserialize_from_opt_str")]
     pub td_mode: Option<TradeMode>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub acc_fill_sz: Option<Decimal>,
+    pub acc_fill_sz: Option<String>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub fill_px: Option<Decimal>,
+    pub fill_px: Option<String>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
     pub trade_id: Option<String>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub fill_sz: Option<Decimal>,
+    pub fill_sz: Option<String>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
     pub fill_time: Option<u64>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub avg_px: Option<Decimal>,
+    pub avg_px: Option<String>,
     #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
     pub state: OrderState,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub lever: Option<Decimal>,
+    pub lever: Option<String>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub tp_trigger_px: Option<Decimal>,
+    pub tp_trigger_px: Option<String>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
     pub tp_trigger_px_type: Option<TakeProfitTriggerPriceType>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub tp_ord_px: Option<Decimal>,
+    pub tp_ord_px: Option<String>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub sl_trigger_px: Option<Decimal>,
+    pub sl_trigger_px: Option<String>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
     pub sl_trigger_px_type: Option<StopLossTriggerPriceType>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub sl_ord_px: Option<Decimal>,
+    pub sl_ord_px: Option<String>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
     pub fee_ccy: Option<String>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub fee: Option<Decimal>,
+    pub fee: Option<String>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
     pub rebate_ccy: Option<String>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
     pub source: Option<String>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub rebate: Option<Decimal>,
+    pub rebate: Option<String>,
     #[serde(deserialize_with = "deserialize_from_opt_str")]
     pub category: Option<Category>,
     #[serde(deserialize_with = "deserialize_timestamp")]
