@@ -9,7 +9,7 @@ use crate::{
 use const_format::concatcp;
 use serde::Deserialize;
 use crate::api::error::{ApiError, Error};
-use crate::api::v5::{AccountChannel, BalanceAndPositionChannel, PositionsChannel};
+use crate::api::v5::{AccountChannel, BalanceAndPositionChannel, OrderOp, PositionsChannel};
 use crate::api::v5::orderbook_trading::orders::websocket::OrdersChannel;
 
 fn deser_from_str<'a, T>(s: &'a str) -> serde_json::Result<T>
@@ -45,6 +45,8 @@ impl_channel_match!(PositionsChannel);
 impl_channel_match!(AccountChannel);
 impl_channel_match!(BalanceAndPositionChannel);
 impl_channel_match!(OrdersChannel);
+
+impl ChannelMatch for OrderOp { const CHANNEL_PATTERN: &'static str = r#""op":"order""#; }
 
 #[cfg(test)]
 mod test_channel_match {

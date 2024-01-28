@@ -7,6 +7,7 @@ use crate::serde_util::{deserialize_from_opt_str, deserialize_timestamp};
 use chrono::{DateTime, Utc};
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
+use crate::websocket::WebsocketChannel;
 
 /// https://www.okx.com/docs-v5/en/#rest-api-trade-cancel-order
 #[derive(Debug, Clone, Serialize)]
@@ -352,4 +353,11 @@ pub mod websocket {
             .to_string()
         }
     }
+}
+
+pub struct OrderOp;
+impl WebsocketChannel for OrderOp {
+    const CHANNEL: &'static str = "";
+    type Response<'de> = PlaceOrderResponse;
+    type ArgType<'de> = ();
 }
