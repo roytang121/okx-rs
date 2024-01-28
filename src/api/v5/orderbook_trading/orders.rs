@@ -358,6 +358,6 @@ pub mod websocket {
 pub struct OrderOp;
 impl WebsocketChannel for OrderOp {
     const CHANNEL: &'static str = "";
-    type Response<'de> = PlaceOrderResponse;
+    type Response<'de> = [PlaceOrderResponse; 1];
     type ArgType<'de> = ();
 }
