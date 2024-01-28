@@ -6,7 +6,6 @@ use crate::api::v5::{ExecType, Request, SelfTradePreventionMode};
 use crate::serde_util::{deserialize_from_opt_str, deserialize_timestamp};
 use chrono::{DateTime, Utc};
 use reqwest::Method;
-use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
 /// https://www.okx.com/docs-v5/en/#rest-api-trade-cancel-order
@@ -94,11 +93,11 @@ pub struct PlaceOrder {
     #[serde(serialize_with = "crate::serde_util::serialize_as_str")]
     pub ord_type: OrderType,
     /// Quantity to buy or sell
-    pub sz: Decimal,
+    pub sz: String,
     /// Order price. Only applicable to limit,post_only,fok,ioc,mmp,mmp_and_post_only order.
     /// When placing an option order, one of px/pxUsd/pxVol must be filled in, and only one can be filled in
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub px: Option<Decimal>,
+    pub px: Option<String>,
     /// Whether orders can only reduce in position size.
     /// Valid options: true or false. The default value is false.
     /// Only applicable to MARGIN orders, and FUTURES/SWAP orders in net mode
@@ -125,21 +124,21 @@ pub struct PlaceOrder {
     /// Take-profit trigger price
     /// If you fill in this parameter, you should fill in the take-profit order price as well.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub tp_trigger_px: Option<Decimal>,
+    pub tp_trigger_px: Option<String>,
     /// Take-profit order price
     /// If you fill in this parameter, you should fill in the take-profit trigger price as well.
     /// If the price is -1, take-profit will be executed at the market price.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub tp_ord_px: Option<Decimal>,
+    pub tp_ord_px: Option<String>,
     /// Stop-loss trigger price
     /// If you fill in this parameter, you should fill in the stop-loss order price.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub sl_trigger_px: Option<Decimal>,
+    pub sl_trigger_px: Option<String>,
     /// Stop-loss order price
     /// If you fill in this parameter, you should fill in the stop-loss trigger price.
     /// If the price is -1, stop-loss will be executed at the market price.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub sl_ord_px: Option<Decimal>,
+    pub sl_ord_px: Option<String>,
     /// Take-profit trigger price type
     /// last: last price
     /// index: index price
