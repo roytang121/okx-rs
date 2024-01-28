@@ -181,8 +181,7 @@ pub struct PlaceOrderResponse {
     /// Order tag
     pub tag: String,
     /// The code of the event execution result, 0 means success.
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub s_code: u32,
+    pub s_code: String,
     /// Rejection or success message of event execution.
     pub s_msg: String,
 }
