@@ -56,7 +56,7 @@ pub struct WsResponse<'a, A: Debug, T: Debug> {
     pub id: Option<&'a str>,
     pub op: Option<&'a str>,
     pub arg: Option<A>,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_opt_str")]
+    #[serde(default = "crate::serde_util::none", deserialize_with = "crate::serde_util::deserialize_from_opt_str")]
     pub code: Option<u32>,
     pub conn_id: Option<&'a str>,
     pub event: Option<&'a str>,
