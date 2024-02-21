@@ -1,7 +1,8 @@
 use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::de::Error;
-use serde::{de, Deserialize, Deserializer, Serializer};
+use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::Display;
+use std::ops::{Deref, DerefMut};
 use std::str::FromStr;
 
 pub fn deserialize_from_str<'de, D, T>(deserializer: D) -> Result<T, D::Error>
@@ -285,5 +286,230 @@ mod tests_timestamp {
             m.bar.as_ref(),
             &DateTime::parse_from_rfc3339("2021-01-07T06:13:20Z").unwrap()
         );
+    }
+}
+
+pub(crate) mod serde_float {
+    use serde::de::Error;
+    use serde::{Deserialize, Deserializer, Serializer};
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<f64, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum StringOrFloat {
+            String(String),
+            Number(f64),
+            Null(()),
+        }
+        let s = StringOrFloat::deserialize(deserializer)?;
+        match s {
+            StringOrFloat::String(s) => match s.as_str() {
+                s => s.parse().map_err(D::Error::custom),
+            },
+            StringOrFloat::Number(n) => Ok(n),
+            StringOrFloat::Null(_) => Err(D::Error::custom("null is not a valid number")),
+        }
+    }
+
+    pub fn serialize<S>(f: &f64, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&f.to_string())
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct FloatOpt(Option<f64>);
+impl AsRef<Option<f64>> for FloatOpt {
+    fn as_ref(&self) -> &Option<f64> {
+        &self.0
+    }
+}
+
+impl Deref for FloatOpt {
+    type Target = Option<f64>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for FloatOpt {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl From<Option<f64>> for FloatOpt {
+    fn from(opt: Option<f64>) -> Self {
+        FloatOpt(opt)
+    }
+}
+
+impl From<f64> for FloatOpt {
+    fn from(f: f64) -> Self {
+        FloatOpt(Some(f))
+    }
+}
+
+impl<'de> Deserialize<'de> for FloatOpt {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        serde_float_opt::deserialize(deserializer)
+            .map_err(D::Error::custom)
+            .map(Into::into)
+    }
+}
+
+impl Serialize for FloatOpt {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serde_float_opt::serialize(self, serializer)
+    }
+}
+
+impl Default for FloatOpt {
+    fn default() -> Self {
+        FloatOpt(None)
+    }
+}
+
+pub(crate) mod serde_float_opt {
+    use crate::serde_util::FloatOpt;
+    use serde::de::Error;
+    use serde::{Deserialize, Deserializer};
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<FloatOpt, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum StringOrFloat {
+            String(String),
+            Number(f64),
+            Null(()),
+        }
+        let s = StringOrFloat::deserialize(deserializer)?;
+        match s {
+            StringOrFloat::String(s) => match s.as_str() {
+                "" => Ok(None.into()),
+                s => s
+                    .parse()
+                    .map_err(D::Error::custom)
+                    .map(Some)
+                    .map(Into::into),
+            },
+            StringOrFloat::Number(n) => Ok(Some(n).into()),
+            StringOrFloat::Null(()) => Ok(None.into()),
+        }
+    }
+
+    pub fn serialize<S>(f: &FloatOpt, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match f.as_ref() {
+            Some(f) => serializer.serialize_str(&f.to_string()),
+            None => serializer.serialize_none(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests_parse_float {
+    use super::{serde_float, FloatOpt};
+    use serde::Deserialize;
+
+    #[test]
+    fn can_deser_float() {
+        #[derive(Debug, Deserialize)]
+        struct Foo {
+            #[serde(with = "serde_float")]
+            bar: f64,
+        }
+
+        let s = r#"{
+            "bar": "1.23"
+        }"#;
+        let m = serde_json::from_str::<Foo>(s).unwrap();
+        assert_eq!(m.bar, 1.23);
+    }
+
+    #[test]
+    fn can_deser_float_with_exp() {
+        #[derive(Debug, Deserialize)]
+        struct Foo {
+            #[serde(with = "serde_float")]
+            bar: f64,
+        }
+
+        let s = r#"{
+            "bar": "1.23e-3"
+        }"#;
+        let m = serde_json::from_str::<Foo>(s).unwrap();
+        assert_eq!(m.bar, 1.23e-3);
+    }
+
+    #[test]
+    fn can_deser_float_opt() {
+        #[derive(Debug, Deserialize)]
+        struct Foo {
+            #[serde(default)]
+            bar: FloatOpt,
+        }
+        let s = r#"{
+            "bar": "1.23"
+        }"#;
+        let m = serde_json::from_str::<Foo>(s).unwrap();
+        assert_eq!(*m.bar, Some(1.23));
+    }
+
+    #[test]
+    fn can_deser_float_opt_empty() {
+        #[derive(Debug, Deserialize)]
+        struct Foo {
+            #[serde(default)]
+            bar: FloatOpt,
+        }
+        let s = r#"{
+            "bar": ""
+        }"#;
+        let m = serde_json::from_str::<Foo>(s).unwrap();
+        assert_eq!(*m.bar, None);
+    }
+
+    #[test]
+    fn can_deser_float_opt_null() {
+        #[derive(Debug, Deserialize)]
+        struct Foo {
+            #[serde(default)]
+            bar: FloatOpt,
+        }
+        let s = r#"{
+            "bar": null
+        }"#;
+        let m = serde_json::from_str::<Foo>(s).unwrap();
+        assert_eq!(*m.bar, None);
+    }
+
+    #[test]
+    fn can_deser_float_opt_missing_key() {
+        #[derive(Debug, Deserialize, Default)]
+        struct Foo {
+            #[serde(default)]
+            bar: FloatOpt,
+        }
+        let s = r#"{ }"#;
+        let m = serde_json::from_str::<Foo>(s).unwrap();
+        assert_eq!(*m.bar, None);
     }
 }

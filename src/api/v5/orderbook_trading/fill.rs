@@ -1,10 +1,9 @@
 use crate::api::v5::model::{InstrumentType, Side};
 use crate::api::v5::Request;
-use crate::serde_util::{deserialize_timestamp, serialize_timestamp};
+use crate::serde_util::{deserialize_timestamp, FloatOpt, serialize_timestamp};
 use anyhow::bail;
 use chrono::{DateTime, Utc};
 use reqwest::Method;
-use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -67,18 +66,19 @@ pub struct FillHistory {
     pub cl_ord_id: String,
     pub bill_id: String,
     pub tag: String,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub fill_px: Decimal,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub fill_sz: Decimal,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
+    #[serde(default)]
+    pub fill_px: FloatOpt,
+    #[serde(default)]
+    pub fill_sz: FloatOpt,
     pub side: Side,
-    pub pos_side: String,
+    #[serde(default, deserialize_with = "crate::serde_util::deserialize_from_opt_str")]
+    pub pos_side: Option<String>,
     #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
     pub exec_type: ExecType,
-    pub fee_ccy: String,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub fee: Decimal,
+    #[serde(default, deserialize_with = "crate::serde_util::deserialize_from_opt_str")]
+    pub fee_ccy: Option<String>,
+    #[serde(default)]
+    pub fee: FloatOpt,
     #[serde(deserialize_with = "deserialize_timestamp")]
     pub ts: DateTime<Utc>,
 }

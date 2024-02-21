@@ -41,8 +41,10 @@ pub struct InterestRates {
 pub struct BaseInterestRate {
     #[serde(rename = "ccy")]
     pub asset: String,
-    pub quota: Decimal,
-    pub rate: Decimal,
+    #[serde(default)]
+    pub quota: FloatOpt,
+    #[serde(default)]
+    pub rate: FloatOpt,
 }
 
 #[derive(Debug, Clone, Deserialize)]
