@@ -37,24 +37,6 @@ pub mod rest {
         type Response = Vec<TradingBalanceDetail>;
     }
 
-    #[cfg(test)]
-    mod tests_get_trading_balances {
-        use crate::api::v5::testkit::with_env_private_client;
-
-        #[ignore]
-        #[tokio::test]
-        async fn test_deser() {
-            with_env_private_client(|client| async move {
-                let resp = client
-                    .request(crate::api::v5::trading_account::GetTradingBalances::default())
-                    .await
-                    .unwrap();
-                println!("{:#?}", resp);
-            })
-            .await;
-        }
-    }
-
     /// https://www.okx.com/docs-v5/en/#trading-account-rest-api-get-positions
     /// ## Get positions
     /// Retrieve information on your positions. When the account is in net mode, net positions will be displayed, and when the account is in long/short mode, long or short positions will be displayed. Return in reverse chronological order using ctime.

@@ -27,8 +27,25 @@ pub struct OrderBook {
 
 impl std::fmt::Debug for OrderBook {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "{:?} asks / ", self.asks.iter().take(8).rev().map(|(price, level)| format!("({},{})", price, level.size)).collect::<Vec<String>>())?;
-        writeln!(f, "bids {:?}", self.bids.iter().take(8).map(|(price, level)| format!("({},{})", price.0, level.size)).collect::<Vec<String>>())
+        writeln!(
+            f,
+            "{:?} asks / ",
+            self.asks
+                .iter()
+                .take(8)
+                .rev()
+                .map(|(price, level)| format!("({},{})", price, level.size))
+                .collect::<Vec<String>>()
+        )?;
+        writeln!(
+            f,
+            "bids {:?}",
+            self.bids
+                .iter()
+                .take(8)
+                .map(|(price, level)| format!("({},{})", price.0, level.size))
+                .collect::<Vec<String>>()
+        )
     }
 }
 
@@ -45,16 +62,19 @@ impl OrderBook {
         }
     }
 
-    fn handle_bbo(&mut self, price: Fixed, size: Fixed, side: Side) {
+    fn handle_bbo(&mut self, price: Fixed, _size: Fixed, side: Side) {
         match side {
-            Side::Buy => self.bids.retain(|k, v| k.0 <= price),
-            Side::Sell => self.asks.retain(|k, v| *k >= price)
+            Side::Buy => self.bids.retain(|k, _v| k.0 <= price),
+            Side::Sell => self.asks.retain(|k, _v| *k >= price),
         };
     }
 
     fn update_level(&mut self, price: Fixed, size: Fixed, side: Side) {
         let partial_level = match side {
-            Side::Buy => self.bids.entry(Reverse(price)).or_insert_with(|| size.into()),
+            Side::Buy => self
+                .bids
+                .entry(Reverse(price))
+                .or_insert_with(|| size.into()),
             Side::Sell => self.asks.entry(price).or_insert_with(|| size.into()),
         };
         partial_level.size = size;
@@ -78,7 +98,7 @@ impl OrderBook {
     fn crossed(&self) -> bool {
         match (self.best_bid(), self.best_ask()) {
             (Some((bid, _)), Some((ask, _))) => bid > ask,
-            _ => false
+            _ => false,
         }
     }
 }

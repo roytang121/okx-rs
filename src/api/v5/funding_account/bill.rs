@@ -3,7 +3,9 @@
 use crate::api::v5::model::{InstrumentType, MarginMode};
 use crate::api::v5::{ExecType, Request};
 use crate::impl_string_enum;
-use crate::serde_util::{deserialize_from_opt_str, deserialize_timestamp, deserialize_timestamp_opt, MaybeString};
+use crate::serde_util::{
+    deserialize_from_opt_str, deserialize_timestamp, deserialize_timestamp_opt, MaybeString,
+};
 use chrono::{DateTime, Utc};
 use reqwest::Method;
 use rust_decimal::Decimal;

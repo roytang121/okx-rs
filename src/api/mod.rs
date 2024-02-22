@@ -157,7 +157,12 @@ impl Rest {
                         }))
                     }
                 }
-                code => Err(Error::Api(ApiError { code, msg: Some(msg), data, conn_id: None })),
+                code => Err(Error::Api(ApiError {
+                    code,
+                    msg: Some(msg),
+                    data,
+                    conn_id: None,
+                })),
             },
             Err(e) => {
                 log::debug!("{}", String::from_utf8_lossy(&body));
@@ -170,8 +175,7 @@ impl Rest {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::api::v5::model::InstrumentType;
-    use crate::api::v5::GetInstruments;
+
     use serde::Serialize;
     use serde_json::Value;
 

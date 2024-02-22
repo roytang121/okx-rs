@@ -295,7 +295,7 @@ pub mod async_client {
                     }
                 ]
             })
-                .to_string())
+            .to_string())
         }
     }
 

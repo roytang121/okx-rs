@@ -46,9 +46,17 @@ pub struct BaseInterestRate {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct InterestRateTier {
-    #[serde(rename = "irDiscount", default, deserialize_with = "deserialize_from_opt_str")]
+    #[serde(
+        rename = "irDiscount",
+        default,
+        deserialize_with = "deserialize_from_opt_str"
+    )]
     pub discount: Option<f64>,
-    #[serde(rename = "loanQuotaCoef", default, deserialize_with = "deserialize_from_opt_str")]
+    #[serde(
+        rename = "loanQuotaCoef",
+        default,
+        deserialize_with = "deserialize_from_opt_str"
+    )]
     pub loan_quota_coef: Option<f64>,
     pub level: String,
 }

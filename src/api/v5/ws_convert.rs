@@ -120,13 +120,13 @@ where
 
 impl Books {
     #[cfg(not(feature = "simd"))]
-    pub fn try_parse_books<'a>(
-        msg: &'a str,
+    pub fn try_parse_books(
+        msg: &str,
     ) -> Option<
         WsResponse<
-            'a,
-            <Self as WebsocketChannel>::ArgType<'a>,
-            <Self as WebsocketChannel>::Response<'a>,
+            '_,
+            <Self as WebsocketChannel>::ArgType<'_>,
+            <Self as WebsocketChannel>::Response<'_>,
         >,
     > {
         if msg.contains(Books::CHANNEL_PATTERN) || msg.contains(BboTbt::CHANNEL_PATTERN) {

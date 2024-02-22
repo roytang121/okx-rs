@@ -18,6 +18,7 @@ pub enum BookUpdateType {
 }
 
 impl BookManager {
+    #[allow(clippy::all)]
     pub fn handle_book_update(&mut self, update: BookUpdate, update_type: BookUpdateType) -> bool {
         if update.seq_id < update.prev_seq_id.expect("no prev seq") {
             // sequence reset due to maintenance. just panics for now
@@ -43,7 +44,13 @@ impl BookManager {
         };
 
         if should_update {
-            let BookUpdate { seq_id, ts, bids, asks, .. } = update;
+            let BookUpdate {
+                seq_id,
+                ts,
+                bids,
+                asks,
+                ..
+            } = update;
             self.last_seq = Some(seq_id);
             self.last_exch_ts = Some(ts.expect("no ts"));
 
@@ -52,23 +59,43 @@ impl BookManager {
                 match bids {
                     Levels::Depth1(bids) => {
                         let bid = bids[0];
-                        self.book.handle_level(bid.price.parse().unwrap(), bid.size.parse().unwrap(), Side::Buy, true);
+                        self.book.handle_level(
+                            bid.price.parse().unwrap(),
+                            bid.size.parse().unwrap(),
+                            Side::Buy,
+                            true,
+                        );
                     }
-                    _ => unreachable!("not an bbo")
+                    _ => unreachable!("not an bbo"),
                 }
                 match asks {
                     Levels::Depth1(asks) => {
                         let ask = asks[0];
-                        self.book.handle_level(ask.price.parse().unwrap(), ask.size.parse().unwrap(), Side::Sell, true);
+                        self.book.handle_level(
+                            ask.price.parse().unwrap(),
+                            ask.size.parse().unwrap(),
+                            Side::Sell,
+                            true,
+                        );
                     }
-                    _ => unreachable!("not an bbo")
+                    _ => unreachable!("not an bbo"),
                 }
             } else {
                 for bid in bids.iter() {
-                    self.book.handle_level(bid.price.parse().unwrap(), bid.size.parse().unwrap(), Side::Buy, false);
+                    self.book.handle_level(
+                        bid.price.parse().unwrap(),
+                        bid.size.parse().unwrap(),
+                        Side::Buy,
+                        false,
+                    );
                 }
                 for ask in asks.iter() {
-                    self.book.handle_level(ask.price.parse().unwrap(), ask.size.parse().unwrap(), Side::Sell, false);
+                    self.book.handle_level(
+                        ask.price.parse().unwrap(),
+                        ask.size.parse().unwrap(),
+                        Side::Sell,
+                        false,
+                    );
                 }
             }
 

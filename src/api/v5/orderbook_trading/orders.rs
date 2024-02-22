@@ -4,9 +4,9 @@ use crate::api::v5::model::{
 };
 use crate::api::v5::{ExecType, Request, SelfTradePreventionMode};
 use crate::serde_util::{deserialize_from_opt_str, MaybeFloat, MaybeString, MaybeU64};
+use crate::websocket::WebsocketChannel;
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
-use crate::websocket::WebsocketChannel;
 
 /// https://www.okx.com/docs-v5/en/#rest-api-trade-cancel-order
 #[derive(Debug, Clone, Serialize)]

@@ -1,9 +1,9 @@
 use super::options::Options;
 use base64::encode;
-use reqwest::{Method, Url};
-use std::convert::TryFrom;
-use sha2::Sha256;
 use hmac::{Hmac, Mac};
+use reqwest::{Method, Url};
+use sha2::Sha256;
+use std::convert::TryFrom;
 
 // Create alias for HMAC-SHA256
 type HmacSha256 = Hmac<Sha256>;

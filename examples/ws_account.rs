@@ -1,10 +1,12 @@
-use log::{error, info};
+use log::info;
 use okx_rs::api::options::Options;
-use okx_rs::api::v5::{AccountChannel, BalanceAndPositionChannel, BalanceAndPositionDetail, InstrumentType, PositionsChannel};
-use okx_rs::websocket::async_client::OKXWebsocketClient;
-use okx_rs::websocket::{AsyncWebsocketClient, AsyncWebsocketSession, Message, PublicChannel, Subscriptions};
-use url::Url;
 use okx_rs::api::v5::ws_convert::TryParseEvent;
+use okx_rs::api::v5::{
+    AccountChannel, BalanceAndPositionChannel, InstrumentType, PositionsChannel,
+};
+use okx_rs::websocket::async_client::OKXWebsocketClient;
+use okx_rs::websocket::{AsyncWebsocketClient, AsyncWebsocketSession, Message, Subscriptions};
+use url::Url;
 
 #[tokio::main]
 async fn main() {
@@ -31,14 +33,20 @@ async fn main() {
         .await
         .unwrap();
     session
-        .subscribe_channel(&mut client, PositionsChannel {
-            inst_type: InstrumentType::Any,
-            inst_family: None,
-            inst_id: None,
-        })
+        .subscribe_channel(
+            &mut client,
+            PositionsChannel {
+                inst_type: InstrumentType::Any,
+                inst_family: None,
+                inst_id: None,
+            },
+        )
         .await
         .unwrap();
-    session.subscribe_channel(&mut client, BalanceAndPositionChannel).await.unwrap();
+    session
+        .subscribe_channel(&mut client, BalanceAndPositionChannel)
+        .await
+        .unwrap();
 
     let mut ping = tokio::time::interval(tokio::time::Duration::from_secs(10));
 
@@ -49,7 +57,7 @@ async fn main() {
                 res
             }
             _ = ping.tick() => {
-                client.send("ping".into()).await.unwrap();
+                client.send("ping").await.unwrap();
                 continue
             }
             else => continue
@@ -60,7 +68,7 @@ async fn main() {
             Err(err) => {
                 log::error!("{:?}", err);
                 continue;
-            },
+            }
             _ => continue,
         };
 
@@ -71,7 +79,7 @@ async fn main() {
         } else if let Ok(Some(pos)) = PositionsChannel::try_parse(&msg) {
             info!("{:?}", pos);
         } else {
-            continue
+            continue;
         }
     }
 }

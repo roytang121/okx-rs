@@ -1,9 +1,9 @@
+use crate::serde_util::MaybeU64;
 use reqwest::Method;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::fmt::Debug;
-use crate::serde_util::MaybeU64;
 
 pub mod ws_convert;
 
@@ -57,7 +57,10 @@ pub struct WsResponse<'a, A: Debug, T: Debug> {
     pub id: Option<&'a str>,
     pub op: Option<&'a str>,
     pub arg: Option<A>,
-    #[serde(default, deserialize_with = "crate::serde_util::deserialize_from_opt_str")]
+    #[serde(
+        default,
+        deserialize_with = "crate::serde_util::deserialize_from_opt_str"
+    )]
     pub code: Option<u64>,
     pub conn_id: Option<&'a str>,
     pub event: Option<&'a str>,

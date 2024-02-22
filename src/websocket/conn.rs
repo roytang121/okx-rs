@@ -127,7 +127,7 @@ impl WebsocketChannel for BooksL2Tbt {
                 }
             ]
         })
-            .to_string()
+        .to_string()
     }
 
     fn unsubscribe_message(&self) -> String {

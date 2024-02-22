@@ -24,8 +24,10 @@ where
     match StringOrFloat::deserialize(deserializer)? {
         StringOrFloat::Str(s) => match s {
             "" => Ok(None),
-            s => FromStr::from_str(s).map_err(de::Error::custom).map(Option::Some),
-        }
+            s => FromStr::from_str(s)
+                .map_err(de::Error::custom)
+                .map(Option::Some),
+        },
         _ => Ok(None),
     }
 }
@@ -313,9 +315,10 @@ pub(crate) mod serde_float {
         }
         let s = StringOrFloat::deserialize(deserializer)?;
         match s {
-            StringOrFloat::String(s) => match s.as_str() {
-                s => s.parse().map_err(D::Error::custom),
-            },
+            StringOrFloat::String(s) => {
+                let s = s.as_str();
+                s.parse().map_err(D::Error::custom)
+            }
             StringOrFloat::Number(n) => Ok(n),
             StringOrFloat::Null(_) => Err(D::Error::custom("null is not a valid number")),
         }
@@ -339,7 +342,7 @@ pub type MaybeString = Maybe<String>;
 #[derive(Debug, Clone)]
 pub struct Maybe<T>(pub Option<T>);
 
-impl <T> Default for Maybe<T> {
+impl<T> Default for Maybe<T> {
     fn default() -> Self {
         Maybe(None)
     }
@@ -353,36 +356,41 @@ impl<T> Deref for Maybe<T> {
     }
 }
 
-impl <T> DerefMut for Maybe<T> {
+impl<T> DerefMut for Maybe<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
 }
 
-impl <T> AsRef<Option<T>> for Maybe<T> {
+impl<T> AsRef<Option<T>> for Maybe<T> {
     fn as_ref(&self) -> &Option<T> {
         &self.0
     }
 }
 
-impl <T> Into<Option<T>> for Maybe<T> {
-    fn into(self) -> Option<T> {
-        self.0
+impl<T> From<Maybe<T>> for Option<T> {
+    fn from(val: Maybe<T>) -> Self {
+        val.0
     }
 }
 
-
-impl <T> Maybe<T> {
+impl<T> Maybe<T> {
     pub fn into_option(self) -> Option<T> {
         self.into()
     }
 }
 
-impl <T> Serialize for Maybe<T> where T: std::fmt::Display {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
+impl<T> Serialize for Maybe<T>
+where
+    T: std::fmt::Display,
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
         match &self.0 {
             Some(v) => serializer.serialize_str(&v.to_string()),
-            None => serializer.serialize_none()
+            None => serializer.serialize_none(),
         }
     }
 }
@@ -396,47 +404,47 @@ impl<'de> Deserialize<'de> for Maybe<f64> {
             StringOrFloat::Str(s) => match s {
                 "" => Ok(Maybe(None)),
                 s => Ok(Maybe(Some(s.parse().map_err(D::Error::custom)?))),
-            }
+            },
             StringOrFloat::Bool(_) => Ok(Maybe(None)),
             StringOrFloat::Float(v) => Ok(Maybe(Some(v))),
             StringOrFloat::Integer(v) => Ok(Maybe(Some(v as f64))),
-            StringOrFloat::Null(()) => Ok(Maybe(None))
+            StringOrFloat::Null(()) => Ok(Maybe(None)),
         }
     }
 }
 
 impl<'de> Deserialize<'de> for Maybe<u64> {
     fn deserialize<D>(deserializer: D) -> Result<Maybe<u64>, D::Error>
-        where
-            D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
     {
         match StringOrFloat::deserialize(deserializer)? {
             StringOrFloat::Str(s) => match s {
                 "" => Ok(Maybe(None)),
                 s => Ok(Maybe(Some(s.parse().map_err(D::Error::custom)?))),
-            }
+            },
             StringOrFloat::Bool(_) => Ok(Maybe(None)),
             StringOrFloat::Float(v) => Ok(Maybe(Some(v as u64))),
             StringOrFloat::Integer(v) => Ok(Maybe(Some(v as u64))),
-            StringOrFloat::Null(()) => Ok(Maybe(None))
+            StringOrFloat::Null(()) => Ok(Maybe(None)),
         }
     }
 }
 
 impl<'de> Deserialize<'de> for Maybe<i64> {
     fn deserialize<D>(deserializer: D) -> Result<Maybe<i64>, D::Error>
-        where
-            D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
     {
         match StringOrFloat::deserialize(deserializer)? {
             StringOrFloat::Str(s) => match s {
                 "" => Ok(Maybe(None)),
                 s => Ok(Maybe(Some(s.parse().map_err(D::Error::custom)?))),
-            }
+            },
             StringOrFloat::Bool(_) => Ok(Maybe(None)),
             StringOrFloat::Float(v) => Ok(Maybe(Some(v as i64))),
             StringOrFloat::Integer(v) => Ok(Maybe(Some(v))),
-            StringOrFloat::Null(()) => Ok(Maybe(None))
+            StringOrFloat::Null(()) => Ok(Maybe(None)),
         }
     }
 }
@@ -450,11 +458,11 @@ impl<'de> Deserialize<'de> for Maybe<String> {
             StringOrFloat::Str(s) => match s {
                 "" => Ok(Maybe(None)),
                 s => Ok(Maybe(Some(s.to_string()))),
-            }
+            },
             StringOrFloat::Bool(v) => Ok(Maybe(Some(v.to_string()))),
             StringOrFloat::Float(v) => Ok(Maybe(Some(v.to_string()))),
             StringOrFloat::Integer(v) => Ok(Maybe(Some(v.to_string()))),
-            StringOrFloat::Null(()) => Ok(Maybe(None))
+            StringOrFloat::Null(()) => Ok(Maybe(None)),
         }
     }
 }
@@ -590,14 +598,17 @@ mod test_parse_maybe_enum {
 
     enum Bar {
         Baz,
-        Other(Box<str>)
+        Other(Box<str>),
     }
-    impl <'de> Deserialize<'de> for Bar {
-        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
+    impl<'de> Deserialize<'de> for Bar {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
             let s = String::deserialize(deserializer)?;
             match s.as_str() {
                 "baz" => Ok(Bar::Baz),
-                other => Ok(Bar::Other(other.into()))
+                other => Ok(Bar::Other(other.into())),
             }
         }
     }
@@ -622,17 +633,17 @@ mod test_parse_maybe_enum {
         assert!(matches!(m.bar, Some(Bar::Other(_))));
         match m.bar.unwrap() {
             Bar::Other(other) => assert_eq!(&*other, *s),
-            _ => panic!("should be other")
+            _ => panic!("should be other"),
         }
 
         let s = r#"{
             "bar": null
         }"#;
         let m = serde_json::from_str::<Foo>(s).unwrap();
-        assert!(matches!(m.bar, None));
+        assert!(m.bar.is_none());
 
         let s = r#"{ }"#;
         let m = serde_json::from_str::<Foo>(s).unwrap();
-        assert!(matches!(m.bar, None));
+        assert!(m.bar.is_none());
     }
 }

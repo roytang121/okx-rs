@@ -1,6 +1,6 @@
 use okx_rs::api::v5::model::InstrumentType::Spot;
 use okx_rs::api::v5::testkit::with_public_client;
-use okx_rs::api::{options::Options, v5::GetInstruments, Rest};
+use okx_rs::api::v5::GetInstruments;
 
 #[tokio::main]
 async fn main() {

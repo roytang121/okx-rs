@@ -1,12 +1,12 @@
 use crate::api::v5::DepositStatus;
 use crate::impl_string_enum;
 use crate::serde_util::*;
+use crate::time::UTCDateTime;
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use serde::de::{Error, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-use crate::time::UTCDateTime;
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Hash)]
 pub struct Unknown;
@@ -686,7 +686,7 @@ pub struct PositionDetail {
 #[serde(rename_all = "camelCase")]
 pub struct BalanceAndPositionDetail {
     /// Push time of both balance and position information, millisecond format of Unix timestamp, e.g. 1597026383085
-    p_time: UTCDateTime,
+    pub p_time: UTCDateTime,
     /// Event Type
     /// snapshot,delivered,exercised,transferred,filled,liquidation,claw_back,adl,funding_fee,adjust_margin,set_leverage,interest_deduction
     pub event_type: BalanceAndPositionEventType,
@@ -712,7 +712,7 @@ pub enum BalanceAndPositionEventType {
     AdjustMargin,
     SetLeverage,
     InterestDeduction,
-    Other(Unknown)
+    Other(Unknown),
 }
 impl_string_enum!(BalanceAndPositionEventType,
     Other,
@@ -775,7 +775,6 @@ pub struct PosData {
     /// Update time, Unix timestamp format in milliseconds, e.g. 1597026383085
     pub u_time: UTCDateTime,
 }
-
 
 #[derive(Debug, Deserialize, Clone, Hash)]
 #[serde(rename_all = "camelCase")]
@@ -1107,7 +1106,7 @@ pub struct Level<'a> {
 }
 #[derive(Debug, Clone, Deserialize)]
 #[serde(untagged)]
-pub enum Levels<'a >{
+pub enum Levels<'a> {
     #[serde(borrow)]
     Depth1([Level<'a>; 1]),
     #[serde(borrow)]
@@ -1116,8 +1115,9 @@ pub enum Levels<'a >{
     Depths(Vec<Level<'a>>),
 }
 
+#[allow(clippy::len_without_is_empty)]
 impl<'a> Levels<'a> {
-    pub fn iter(&self) -> impl Iterator<Item=&Level> + '_ {
+    pub fn iter(&self) -> impl Iterator<Item = &Level> + '_ {
         match self {
             Levels::Depth1(s) => s.iter(),
             Levels::Depth5(s) => s.iter(),
@@ -1189,7 +1189,7 @@ impl<'de> Visitor<'de> for LevelVisitor {
             (Some(price), Some(size), Some("0"), Some(orders)) => Ok(Level {
                 price,
                 size,
-                orders
+                orders,
             }),
             _ => Err(A::Error::custom("invalid level format")),
         }
@@ -1267,10 +1267,10 @@ mod tests_parse_candle {
         let json = r#"["1597026383085","3.721","3.743","3.677","3.708","0"]"#;
         let candle: Candle = serde_json::from_str(json).unwrap();
         assert_eq!(candle.ts.timestamp_millis(), 1597026383085);
-        assert_eq!(*candle.open, "3.721".parse().ok().into());
-        assert_eq!(*candle.high, "3.743".parse().ok().into());
-        assert_eq!(*candle.low, "3.677".parse().ok().into());
-        assert_eq!(*candle.close, "3.708".parse().ok().into());
+        assert_eq!(*candle.open, "3.721".parse().ok());
+        assert_eq!(*candle.high, "3.743".parse().ok());
+        assert_eq!(*candle.low, "3.677".parse().ok());
+        assert_eq!(*candle.close, "3.708".parse().ok());
         assert_eq!(candle.confirm, super::CandleState::Uncompleted);
     }
 }

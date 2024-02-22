@@ -1,6 +1,6 @@
 use crate::api::v5::model::{InstrumentType, Side};
 use crate::api::v5::Request;
-use crate::serde_util::{MaybeFloat, serialize_timestamp};
+use crate::serde_util::{serialize_timestamp, MaybeFloat};
 use anyhow::bail;
 use chrono::{DateTime, Utc};
 use reqwest::Method;
@@ -60,13 +60,25 @@ pub struct GetFillHistory {
 pub struct FillHistory {
     pub inst_type: InstrumentType,
     pub inst_id: String,
-    #[serde(default, deserialize_with = "crate::serde_util::deserialize_from_opt_str")]
+    #[serde(
+        default,
+        deserialize_with = "crate::serde_util::deserialize_from_opt_str"
+    )]
     pub trade_id: Option<String>,
-    #[serde(default, deserialize_with = "crate::serde_util::deserialize_from_opt_str")]
+    #[serde(
+        default,
+        deserialize_with = "crate::serde_util::deserialize_from_opt_str"
+    )]
     pub ord_id: Option<String>,
-    #[serde(default, deserialize_with = "crate::serde_util::deserialize_from_opt_str")]
+    #[serde(
+        default,
+        deserialize_with = "crate::serde_util::deserialize_from_opt_str"
+    )]
     pub cl_ord_id: Option<String>,
-    #[serde(default, deserialize_with = "crate::serde_util::deserialize_from_opt_str")]
+    #[serde(
+        default,
+        deserialize_with = "crate::serde_util::deserialize_from_opt_str"
+    )]
     pub bill_id: Option<String>,
     pub tag: String,
     #[serde(default)]
@@ -74,15 +86,27 @@ pub struct FillHistory {
     #[serde(default)]
     pub fill_sz: MaybeFloat,
     pub side: Side,
-    #[serde(default, deserialize_with = "crate::serde_util::deserialize_from_opt_str")]
+    #[serde(
+        default,
+        deserialize_with = "crate::serde_util::deserialize_from_opt_str"
+    )]
     pub pos_side: Option<String>,
-    #[serde(default, deserialize_with = "crate::serde_util::deserialize_from_opt_str")]
+    #[serde(
+        default,
+        deserialize_with = "crate::serde_util::deserialize_from_opt_str"
+    )]
     pub exec_type: Option<ExecType>,
-    #[serde(default, deserialize_with = "crate::serde_util::deserialize_from_opt_str")]
+    #[serde(
+        default,
+        deserialize_with = "crate::serde_util::deserialize_from_opt_str"
+    )]
     pub fee_ccy: Option<String>,
     #[serde(default)]
     pub fee: MaybeFloat,
-    #[serde(default, deserialize_with = "crate::serde_util::deserialize_from_opt_str")]
+    #[serde(
+        default,
+        deserialize_with = "crate::serde_util::deserialize_from_opt_str"
+    )]
     pub ts: Option<u64>,
 }
 

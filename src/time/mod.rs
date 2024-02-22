@@ -61,7 +61,7 @@ impl<'de> Deserialize<'de> for UTCDateTime {
             where
                 E: serde::de::Error,
             {
-                let time_ms = i64::from_str(&s)
+                let time_ms = i64::from_str(s)
                     .map_err(|err| E::custom(format!("invalid time_ms {s}. {err}")))?;
                 let ndt = NaiveDateTime::from_timestamp_millis(time_ms).unwrap();
                 Ok(ndt.and_local_timezone(Utc).unwrap().into())
