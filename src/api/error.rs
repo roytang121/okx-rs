@@ -27,8 +27,8 @@ pub enum Error<T: Debug> {
 #[derive(Debug, Error)]
 #[error("{self:?}")]
 pub struct ApiError<T: Debug> {
-    pub code: Option<u32>,
+    pub code: Option<u64>,
     pub msg: Option<String>,
     pub data: Option<T>,
-    pub connId: Option<String>,
+    pub conn_id: Option<String>,
 }

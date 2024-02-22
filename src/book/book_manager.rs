@@ -1,6 +1,5 @@
 use crate::api::v5::{BookUpdate, Levels, Side};
 use crate::book::OrderBook;
-use crate::time::{TimeExt, UTCDateTime};
 
 type Seq = i64;
 
@@ -8,7 +7,7 @@ type Seq = i64;
 pub struct BookManager {
     book: OrderBook,
     pub last_seq: Option<Seq>,
-    pub last_exch_ts: Option<i64>,
+    pub last_exch_ts: Option<u64>,
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -20,7 +19,7 @@ pub enum BookUpdateType {
 
 impl BookManager {
     pub fn handle_book_update(&mut self, update: BookUpdate, update_type: BookUpdateType) -> bool {
-        if update.seq_id < update.prev_seq_id {
+        if update.seq_id < update.prev_seq_id.expect("no prev seq") {
             // sequence reset due to maintenance. just panics for now
             // TODO: handle seq reset
             todo!("unhandled seq reset");
@@ -46,7 +45,7 @@ impl BookManager {
         if should_update {
             let BookUpdate { seq_id, ts, bids, asks, .. } = update;
             self.last_seq = Some(seq_id);
-            self.last_exch_ts = Some(ts);
+            self.last_exch_ts = Some(ts.expect("no ts"));
 
             // imply depth levels if bbo
             if update_type == BookUpdateType::BBO {
@@ -74,7 +73,7 @@ impl BookManager {
             }
 
             self.last_seq = Some(seq_id);
-            self.last_exch_ts = Some(ts);
+            self.last_exch_ts = *ts;
             // println!("{:?}", self.book);
             debug_assert!(!self.book.crossed(), "crossed book");
         }

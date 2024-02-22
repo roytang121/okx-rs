@@ -44,14 +44,16 @@ impl Request for GetFundTransferHistory {
 #[serde(rename_all = "camelCase")]
 pub struct FundTransferResponse {
     pub trans_id: String,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub client_id: Option<String>,
-    pub ccy: String,
-    pub amt: Decimal,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub from: AccountType,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub to: AccountType,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub ccy: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub amt: Option<f64>,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub from: Option<AccountType>,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub to: Option<AccountType>,
 }
 
 /// https://www.okx.com/docs-v5/en/#funding-account-rest-api-funds-transfer

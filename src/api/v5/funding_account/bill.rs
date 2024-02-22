@@ -3,15 +3,11 @@
 use crate::api::v5::model::{InstrumentType, MarginMode};
 use crate::api::v5::{ExecType, Request};
 use crate::impl_string_enum;
-use crate::serde_util::{
-    deserialize_from_opt_str, deserialize_timestamp, deserialize_timestamp_opt,
-};
-use anyhow::bail;
+use crate::serde_util::{deserialize_from_opt_str, deserialize_timestamp, deserialize_timestamp_opt, MaybeString};
 use chrono::{DateTime, Utc};
 use reqwest::Method;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::fmt::Formatter;
 use std::str::FromStr;
 
 #[derive(Debug, Clone)]
@@ -356,24 +352,26 @@ impl_string_enum!(AssetBillType,
 #[serde(rename_all = "camelCase")]
 pub struct AssetBill {
     /// Bill ID
-    pub bill_id: String,
+    #[serde(default)]
+    pub bill_id: MaybeString,
     /// Account balance currency
-    pub ccy: String,
+    #[serde(default)]
+    pub ccy: MaybeString,
     /// Client-supplied ID for transfer or withdrawal
     #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub client_id: Option<String>,
+    pub client_id: Option<f64>,
     /// Change in balance at the account level
     #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub bal_chg: Option<Decimal>,
+    pub bal_chg: Option<f64>,
     /// Balance at the account level
     #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub bal: Option<Decimal>,
+    pub bal: Option<f64>,
     /// Bill type
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub r#type: AssetBillType,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub r#type: Option<AssetBillType>,
     /// Creation time, Unix timestamp format in milliseconds, e.g.1597026383085
-    #[serde(default, deserialize_with = "deserialize_timestamp_opt")]
-    pub ts: Option<DateTime<Utc>>,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub ts: Option<u64>,
 }
 
 // gen test for get_asset_bills

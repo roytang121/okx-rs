@@ -1,6 +1,6 @@
 use std::cmp::Reverse;
 use std::collections::BTreeMap;
-use std::fmt::{Debug, Display, Formatter};
+use std::fmt::{Debug, Formatter};
 
 use rust_decimal::Decimal;
 

@@ -3,6 +3,7 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::fmt::Debug;
+use crate::serde_util::MaybeU64;
 
 pub mod ws_convert;
 
@@ -20,10 +21,10 @@ pub use self::funding_account::deposit::*;
 pub use self::funding_account::transfer::*;
 pub use self::funding_account::withdrawal::*;
 // re-export trading_account module
-pub use self::trading_account::*;
+pub use self::trading_account::rest::*;
 pub use self::trading_account::websocket::*;
 // re-export public data module
-pub use self::public_data::*;
+pub use self::public_data::rest::*;
 pub use self::public_data::websocket::*;
 // re-export trading module
 pub use self::orderbook_trading::fill::*;
@@ -44,8 +45,8 @@ pub trait Request: Serialize {
 
 #[derive(Debug, Deserialize)]
 pub struct ApiResponse<T> {
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub code: u32,
+    #[serde(default)]
+    pub code: MaybeU64,
     pub msg: String,
     pub data: Option<T>,
 }
@@ -56,8 +57,8 @@ pub struct WsResponse<'a, A: Debug, T: Debug> {
     pub id: Option<&'a str>,
     pub op: Option<&'a str>,
     pub arg: Option<A>,
-    #[serde(default = "crate::serde_util::none", deserialize_with = "crate::serde_util::deserialize_from_opt_str")]
-    pub code: Option<u32>,
+    #[serde(default, deserialize_with = "crate::serde_util::deserialize_from_opt_str")]
+    pub code: Option<u64>,
     pub conn_id: Option<&'a str>,
     pub event: Option<&'a str>,
     pub action: Option<&'a str>,

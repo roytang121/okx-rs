@@ -12,13 +12,13 @@ use crate::time::UTCDateTime;
 pub struct Unknown;
 impl Display for Unknown {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "other")
+        write!(f, "unknown")
     }
 }
 impl FromStr for Unknown {
     type Err = ();
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn from_str(_: &str) -> Result<Self, Self::Err> {
         Ok(Self)
     }
 }
@@ -303,27 +303,27 @@ pub struct Instrument {
     #[serde(rename = "settleCcy", deserialize_with = "deserialize_from_opt_str")]
     pub margin_currency: Option<String>, // Settlement and margin currency; Only applicable to FUTURES/SWAP/OPTION
     #[serde(rename = "ctVal", default)]
-    pub face_value: FloatOpt, // Contract value; Only applicable to FUTURES/SWAP/OPTION
+    pub face_value: MaybeFloat, // Contract value; Only applicable to FUTURES/SWAP/OPTION
     #[serde(rename = "ctMult", default)]
-    pub contract_multiplier: FloatOpt, // Only applicable to FUTURES/SWAP/OPTION
+    pub contract_multiplier: MaybeFloat, // Only applicable to FUTURES/SWAP/OPTION
     #[serde(rename = "ctValCcy", deserialize_with = "deserialize_from_opt_str")]
     pub contract_value_currency: Option<String>, // Only applicable to FUTURES/SWAP/OPTION
     #[serde(rename = "optType", deserialize_with = "deserialize_from_opt_str")]
     pub option_type: Option<OptionType>, // Only applicable to OPTION
     #[serde(rename = "stk", default)]
-    pub strike_price: FloatOpt, // Only applicable to OPTION
+    pub strike_price: MaybeFloat, // Only applicable to OPTION
     #[serde(rename = "listTime", deserialize_with = "deserialize_timestamp")]
     pub listing_time: DateTime<Utc>,
     #[serde(rename = "expTime", deserialize_with = "deserialize_timestamp_opt")]
     pub expiry_time: Option<DateTime<Utc>>,
     #[serde(rename = "lever", default)]
-    pub max_leverage: FloatOpt, // Only applicable to FUTURES/OPTION; Not applicable to SPOT, OPTION
+    pub max_leverage: MaybeFloat, // Only applicable to FUTURES/OPTION; Not applicable to SPOT, OPTION
     #[serde(rename = "tickSz", default)]
-    pub tick_size: FloatOpt,
+    pub tick_size: MaybeFloat,
     #[serde(rename = "lotSz", default)]
-    pub lot_size: FloatOpt,
+    pub lot_size: MaybeFloat,
     #[serde(rename = "minSz", default)]
-    pub min_size: FloatOpt,
+    pub min_size: MaybeFloat,
     #[serde(rename = "ctType", deserialize_with = "deserialize_from_opt_str")]
     pub contract_type: Option<ContractType>, // Only applicable to FUTURES/SWAP
     #[serde(rename = "alias", deserialize_with = "deserialize_from_opt_str")]
@@ -331,17 +331,17 @@ pub struct Instrument {
     #[serde(rename = "state")]
     pub status: InstrumentStatus,
     #[serde(rename = "maxLmtSz", default)]
-    pub max_lmt_size: FloatOpt, // The maximum order quantity of the contract or spot limit order
+    pub max_lmt_size: MaybeFloat, // The maximum order quantity of the contract or spot limit order
     #[serde(rename = "maxMktSz", default)]
-    pub max_mkt_size: FloatOpt, // The maximum order quantity of the contract or spot market order
+    pub max_mkt_size: MaybeFloat, // The maximum order quantity of the contract or spot market order
     #[serde(rename = "maxTwapSz", default)]
-    pub max_twap_size: FloatOpt, // The maximum order quantity of the contract or spot twap order
+    pub max_twap_size: MaybeFloat, // The maximum order quantity of the contract or spot twap order
     #[serde(rename = "maxIcebergSz", default)]
-    pub max_iceberg_size: FloatOpt, // The maximum order quantity of the contract or spot iceBerg order
+    pub max_iceberg_size: MaybeFloat, // The maximum order quantity of the contract or spot iceBerg order
     #[serde(rename = "maxTriggerSz", default)]
-    pub max_trigger_size: FloatOpt, // The maximum order quantity of the contract or spot trigger order
+    pub max_trigger_size: MaybeFloat, // The maximum order quantity of the contract or spot trigger order
     #[serde(rename = "maxStopSz", default)]
-    pub max_stop_size: FloatOpt, // The maximum order quantity of the contract or spot stop order
+    pub max_stop_size: MaybeFloat, // The maximum order quantity of the contract or spot stop order
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -357,7 +357,7 @@ pub struct DeliveryExerciseHistory {
 pub struct DeliveryExerciseHistoryDetail {
     pub inst_id: String,
     #[serde(default)]
-    pub px: FloatOpt,
+    pub px: MaybeFloat,
     pub r#type: DeliveryExerciseHistoryType,
 }
 
@@ -369,45 +369,45 @@ pub struct TradingBalanceDetail {
     pub u_time: DateTime<Utc>,
     /// The total amount of equity in USD
     #[serde(default)]
-    pub total_eq: FloatOpt,
+    pub total_eq: MaybeFloat,
     /// Isolated margin equity in USD
     // Applicable to Single-currency margin and Multi-currency margin and Portfolio margin
     #[serde(default)]
-    pub iso_eq: FloatOpt,
+    pub iso_eq: MaybeFloat,
     /// Adjusted / Effective equity in USD
     /// The net fiat value of the assets in the account that can provide margins for spot, futures, perpetual swap and options under the cross margin mode.
     /// Cause in multi-ccy or PM mode, the asset and margin requirement will all be converted to USD value to process the order check or liquidation.
     /// Due to the volatility of each currency market, our platform calculates the actual USD value of each currency based on discount rates to balance market risks.
     /// Applicable to Multi-currency margin and Portfolio margin
     #[serde(default)]
-    pub adj_eq: FloatOpt,
+    pub adj_eq: MaybeFloat,
     /// Cross margin frozen for pending orders in USD
     /// Only applicable to Multi-currency margin
     #[serde(default)]
-    pub ord_froz: FloatOpt,
+    pub ord_froz: MaybeFloat,
     /// Initial margin requirement in USD
     /// The sum of initial margins of all open positions and pending orders under cross margin mode in USD.
     /// Applicable to Multi-currency margin and Portfolio margin
     #[serde(default)]
-    pub imr: FloatOpt,
+    pub imr: MaybeFloat,
     /// Maintenance margin requirement in USD
     /// The sum of maintenance margins of all open positions under cross margin mode in USD.
     /// Applicable to Multi-currency margin and Portfolio margin
     #[serde(default)]
-    pub mmr: FloatOpt,
+    pub mmr: MaybeFloat,
     /// Potential borrowing IMR of the account in USD
     /// Only applicable to Multi-currency margin and Portfolio margin. It is "" for other margin modes.
     #[serde(default)]
-    pub borrow_froz: FloatOpt,
+    pub borrow_froz: MaybeFloat,
     /// Margin ratio in USD
     /// The index for measuring the risk of a certain asset in the account.
     /// Applicable to Multi-currency margin and Portfolio margin
     #[serde(default)]
-    pub mgn_ratio: FloatOpt,
+    pub mgn_ratio: MaybeFloat,
     /// Notional value of positions in USD
     /// Applicable to Multi-currency margin and Portfolio margin
     #[serde(default)]
-    pub notional_usd: FloatOpt,
+    pub notional_usd: MaybeFloat,
     /// Detailed asset information in all currencies
     pub details: Vec<TradingBalance>,
 }
@@ -417,10 +417,10 @@ pub struct TradingBalanceDetail {
 pub struct TradingBalance {
     /// Cash Balance
     #[serde(default)]
-    pub cash_bal: FloatOpt,
+    pub cash_bal: MaybeFloat,
     /// Equity of the currency
     #[serde(default)]
-    pub eq: FloatOpt,
+    pub eq: MaybeFloat,
     /// Currency
     pub ccy: String,
     #[serde(deserialize_with = "deserialize_timestamp")]
@@ -428,95 +428,94 @@ pub struct TradingBalance {
     /// Isolated margin equity of the currency
     /// Applicable to Single-currency margin and Multi-currency margin and Portfolio margin
     #[serde(default)]
-    pub iso_eq: FloatOpt,
+    pub iso_eq: MaybeFloat,
     /// Available equity of the currency
     /// The balance that can be used on margin or futures/swap trading.
     /// Applicable to Single-currency margin, Multi-currency margin and Portfolio margin
     #[serde(default)]
-    pub avail_eq: FloatOpt,
+    pub avail_eq: MaybeFloat,
     /// Discount equity of the currency in USD.
     #[serde(default)]
-    pub dis_eq: FloatOpt,
+    pub dis_eq: MaybeFloat,
     /// Frozen balance
     #[serde(default)]
-    pub fixed_bal: FloatOpt,
+    pub fixed_bal: MaybeFloat,
     /// Available balance of the currency
     /// The balance that can be withdrawn or transferred or used on spot trading.
     /// Applicable to Simple, Single-currency margin, Multi-currency margin and Portfolio margin
     #[serde(default)]
-    pub avail_bal: FloatOpt,
+    pub avail_bal: MaybeFloat,
     /// Frozen balance of the currency
     #[serde(default)]
-    pub frozen_bal: FloatOpt,
+    pub frozen_bal: MaybeFloat,
     /// Margin frozen for open orders
     #[serde(default)]
-    pub ord_frozen: FloatOpt,
+    pub ord_frozen: MaybeFloat,
     /// Liabilities of the currency
     /// It is a positive value, e.g."21625.64". Applicable to Multi-currency margin and Portfolio margin
     #[serde(default)]
-    pub liab: FloatOpt,
+    pub liab: MaybeFloat,
     /// The sum of the unrealized profit & loss of all margin and derivatives positions of the currency.
     /// Applicable to Single-currency margin, Multi-currency margin and Portfolio margin
     #[serde(default)]
-    pub upl: FloatOpt,
+    pub upl: MaybeFloat,
     /// Liabilities due to Unrealized loss of the currency
     /// Applicable to Multi-currency margin and Portfolio margin
     #[serde(default)]
-    pub upl_liab: FloatOpt,
+    pub upl_liab: MaybeFloat,
     /// Cross liabilities of the currency
     /// Applicable to Multi-currency margin and Portfolio margin
     #[serde(default)]
-    pub cross_liab: FloatOpt,
+    pub cross_liab: MaybeFloat,
     /// Isolated liabilities of the currency
     /// Applicable to Multi-currency margin and Portfolio margin
     #[serde(default)]
-    pub iso_liab: FloatOpt,
+    pub iso_liab: MaybeFloat,
     /// Isolated liabilities of the currency
     /// Applicable to Multi-currency margin and Portfolio margin
     #[serde(default)]
-    pub mgn_ratio: FloatOpt,
+    pub mgn_ratio: MaybeFloat,
     /// Accrued interest of the currency
     /// It is a positive value, e.g."9.01". Applicable to Multi-currency margin and Portfolio margin
     #[serde(default)]
-    pub interest: FloatOpt,
+    pub interest: MaybeFloat,
     /// Risk indicator of auto liability repayment
     /// Divided into multiple levels from 0 to 5, the larger the number, the more likely the auto repayment will be triggered.
     /// Applicable to Multi-currency margin and Portfolio margin and Portfolio margin
     #[serde(default)]
-    pub twap: FloatOpt,
+    pub twap: MaybeFloat,
     /// Max loan of the currency
     /// Applicable to cross of Multi-currency margin and Portfolio margin
     #[serde(default)]
-    pub max_loan: FloatOpt,
+    pub max_loan: MaybeFloat,
     /// Equity in USD of the currency
     #[serde(default)]
-    pub eq_usd: FloatOpt,
+    pub eq_usd: MaybeFloat,
     /// Potential borrowing IMR of the currency in USD
     /// Only applicable to Multi-currency margin and Portfolio margin. It is "" for other margin modes.
     #[serde(default)]
-    pub borrow_froz: FloatOpt,
+    pub borrow_froz: MaybeFloat,
     /// Leverage of the currency
     /// Applicable to Single-currency margin
     #[serde(default)]
-    pub notional_level: FloatOpt,
+    pub notional_level: MaybeFloat,
     /// Strategy equity
     #[serde(default)]
-    pub stgy_eq: FloatOpt,
+    pub stgy_eq: MaybeFloat,
     /// Isolated unrealized profit and loss of the currency
     /// Applicable to Single-currency margin and Multi-currency margin and Portfolio margin
     #[serde(default)]
-    pub iso_upl: FloatOpt,
+    pub iso_upl: MaybeFloat,
     /// Spot in use amount
     /// Applicable to Portfolio margin
     #[serde(default)]
-    pub spot_in_use_amt: FloatOpt,
+    pub spot_in_use_amt: MaybeFloat,
 }
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PositionDetail {
     /// Instrument type
-    #[serde(deserialize_with = "deserialize_from_str")]
     pub inst_type: InstrumentType,
     /// Margin mode
     /// cross
@@ -531,25 +530,25 @@ pub struct PositionDetail {
     pub pos_side: PositionSide,
     /// Quantity of positions. In the mode of autonomous transfer from position to position, after the deposit is transferred, a position with pos of 0 will be generated
     #[serde(default)]
-    pub pos: FloatOpt,
+    pub pos: MaybeFloat,
     /// Base currency balance, only applicable to MARGIN（Manual transfers and Quick Margin Mode）
     #[serde(default)]
-    pub base_bal: FloatOpt,
+    pub base_bal: MaybeFloat,
     /// Quote currency balance, only applicable to MARGIN（Manual transfers and Quick Margin Mode）
     #[serde(default)]
-    pub quote_bal: FloatOpt,
+    pub quote_bal: MaybeFloat,
     /// Base currency amount already borrowed, only applicable to MARGIN(Quick Margin Mode）
     #[serde(default)]
-    pub base_borrowed: FloatOpt,
+    pub base_borrowed: MaybeFloat,
     /// Base Interest, undeducted interest that has been incurred, only applicable to MARGIN(Quick Margin Mode）
     #[serde(default)]
-    pub base_interest: FloatOpt,
+    pub base_interest: MaybeFloat,
     /// Quote currency amount already borrowed, only applicable to MARGIN(Quick Margin Mode）
     #[serde(default)]
-    pub quote_borrowed: FloatOpt,
+    pub quote_borrowed: MaybeFloat,
     /// Quote Interest, undeducted interest that has been incurred, only applicable to MARGIN(Quick Margin Mode）
     #[serde(default)]
-    pub quote_interest: FloatOpt,
+    pub quote_interest: MaybeFloat,
     /// Position currency, only applicable to MARGIN positions.
     #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub pos_ccy: Option<String>,
@@ -557,64 +556,64 @@ pub struct PositionDetail {
     /// Only applicable to MARGIN, FUTURES/SWAP in the long-short mode and OPTION.
     /// For Margin position, the rest of sz will be SPOT trading after the liability is repaid while closing the position. Please get the available reduce-only amount from "Get maximum available tradable amount" if you want to reduce the amount of SPOT trading as much as possible.
     #[serde(default)]
-    pub avail_pos: FloatOpt,
+    pub avail_pos: MaybeFloat,
     /// Average open price
     #[serde(default)]
-    pub avg_px: FloatOpt,
+    pub avg_px: MaybeFloat,
     /// Latest Mark price
     #[serde(default)]
-    pub mark_px: FloatOpt,
+    pub mark_px: MaybeFloat,
     /// Unrealized profit and loss calculated by mark price.
     #[serde(default)]
-    pub upl: FloatOpt,
+    pub upl: MaybeFloat,
     /// Unrealized profit and loss ratio calculated by mark price.
     #[serde(default)]
-    pub upl_ratio: FloatOpt,
+    pub upl_ratio: MaybeFloat,
     /// Unrealized profit and loss calculated by last price. Main usage is showing, actual value is upl.
     #[serde(default)]
-    pub upl_last_px: FloatOpt,
+    pub upl_last_px: MaybeFloat,
     /// Unrealized profit and loss ratio calculated by last price.
     #[serde(default)]
-    pub upl_ratio_last_px: FloatOpt,
+    pub upl_ratio_last_px: MaybeFloat,
     /// Instrument ID, e.g. BTC-USD-180216
     pub inst_id: String,
     /// Leverage, not applicable to OPTION
     #[serde(default)]
-    pub lever: FloatOpt,
+    pub lever: MaybeFloat,
     /// Estimated liquidation price
     /// Not applicable to OPTION
     #[serde(default)]
-    pub liq_px: FloatOpt,
+    pub liq_px: MaybeFloat,
     /// Initial margin requirement, only applicable to cross.
     #[serde(default)]
-    pub imr: FloatOpt,
+    pub imr: MaybeFloat,
     /// Margin, can be added or reduced. Only applicable to isolated.
     #[serde(default)]
-    pub margin: FloatOpt,
+    pub margin: MaybeFloat,
     /// Margin ratio
     #[serde(default)]
-    pub mgn_ratio: FloatOpt,
+    pub mgn_ratio: MaybeFloat,
     /// Maintenance margin requirement
     #[serde(default)]
-    pub mmr: FloatOpt,
+    pub mmr: MaybeFloat,
     /// Liabilities, only applicable to MARGIN.
     #[serde(default)]
-    pub liab: FloatOpt,
+    pub liab: MaybeFloat,
     /// Liabilities currency, only applicable to MARGIN.
     #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub liab_ccy: Option<String>,
     /// Interest. Undeducted interest that has been incurred.
     #[serde(default)]
-    pub interest: FloatOpt,
+    pub interest: MaybeFloat,
     /// Last trade ID
     #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub trade_id: Option<String>,
     /// Option Value, only applicable to OPTION.
     #[serde(default)]
-    pub opt_val: FloatOpt,
+    pub opt_val: MaybeFloat,
     /// Notional value of positions in USD
     #[serde(default)]
-    pub notional_usd: FloatOpt,
+    pub notional_usd: MaybeFloat,
     /// Auto-deleveraging (ADL) indicator
     /// Divided into 5 levels, from 1 to 5, the smaller the number, the weaker the adl intensity.
     pub adl: String,
@@ -622,36 +621,36 @@ pub struct PositionDetail {
     pub ccy: String,
     /// Latest traded price
     #[serde(default)]
-    pub last: FloatOpt,
+    pub last: MaybeFloat,
     /// Latest underlying index price
     #[serde(default)]
-    pub idx_px: FloatOpt,
+    pub idx_px: MaybeFloat,
     /// USD price
     #[serde(default)]
-    pub usd_px: FloatOpt,
+    pub usd_px: MaybeFloat,
     /// Breakeven price
     #[serde(rename = "be_px", default)]
-    pub breakeven_price: FloatOpt,
+    pub breakeven_price: MaybeFloat,
     #[serde(default)]
-    pub delta_bs: FloatOpt,
+    pub delta_bs: MaybeFloat,
     #[serde(default)]
-    pub delta_pa: FloatOpt,
+    pub delta_pa: MaybeFloat,
     #[serde(default)]
-    pub gamma_bs: FloatOpt,
+    pub gamma_bs: MaybeFloat,
     #[serde(default)]
-    pub gamma_pa: FloatOpt,
+    pub gamma_pa: MaybeFloat,
     #[serde(default)]
-    pub theta_bs: FloatOpt,
+    pub theta_bs: MaybeFloat,
     #[serde(default)]
-    pub theta_pa: FloatOpt,
+    pub theta_pa: MaybeFloat,
     #[serde(default)]
-    pub vega_bs: FloatOpt,
+    pub vega_bs: MaybeFloat,
     #[serde(default)]
-    pub vega_pa: FloatOpt,
+    pub vega_pa: MaybeFloat,
     /// Spot in use amount
     /// Applicable to Portfolio margin
     #[serde(default)]
-    pub spot_in_use_amt: FloatOpt,
+    pub spot_in_use_amt: MaybeFloat,
     /// Spot in use unit, e.g. BTC
     /// Applicable to Portfolio margin
     #[serde(default, deserialize_with = "deserialize_from_opt_str")]
@@ -664,17 +663,17 @@ pub struct PositionDetail {
     pub biz_ref_type: Option<String>,
     /// Realized profit and loss
     #[serde(default)]
-    pub realized_pnl: FloatOpt,
+    pub realized_pnl: MaybeFloat,
     /// Accumulated pnl of closing order(s)
     #[serde(default)]
-    pub pnl: FloatOpt,
+    pub pnl: MaybeFloat,
     /// Accumulated fee
     /// Negative number represents the user transaction fee charged by the platform.Positive number represents rebate.
     #[serde(default)]
-    pub fee: FloatOpt,
+    pub fee: MaybeFloat,
     /// Accumulated funding fee
     #[serde(default)]
-    pub funding_fee: FloatOpt,
+    pub funding_fee: MaybeFloat,
     /// Latest time position was adjusted, Unix timestamp format in milliseconds, e.g. 1597026383085
     #[serde(deserialize_with = "deserialize_timestamp")]
     pub u_time: DateTime<Utc>,
@@ -735,7 +734,7 @@ impl_string_enum!(BalanceAndPositionEventType,
 #[serde(rename_all = "camelCase")]
 pub struct BalanceData {
     pub ccy: String,
-    pub cash_bal: FloatOpt,
+    pub cash_bal: MaybeFloat,
     pub u_time: UTCDateTime,
 }
 
@@ -758,13 +757,13 @@ pub struct PosData {
     pub pos_side: PositionSide,
     /// Quantity of positions. In the mode of autonomous transfer from position to position, after the deposit is transferred, a position with pos of 0 will be generated
     #[serde(default)]
-    pub pos: FloatOpt,
+    pub pos: MaybeFloat,
     /// Base currency balance, only applicable to MARGIN（Manual transfers and Quick Margin Mode
     #[serde(default)]
-    pub base_bal: FloatOpt,
+    pub base_bal: MaybeFloat,
     /// Quote currency balance, only applicable to MARGIN（Manual transfers and Quick Margin Mode
     #[serde(default)]
-    pub quote_bal: FloatOpt,
+    pub quote_bal: MaybeFloat,
     /// Currency
     pub ccy: String,
     /// Position currency, only applicable to MARGIN positions.
@@ -772,7 +771,7 @@ pub struct PosData {
     pub pos_ccy: Option<String>,
     /// Average open price
     #[serde(default)]
-    pub avg_px: FloatOpt,
+    pub avg_px: MaybeFloat,
     /// Update time, Unix timestamp format in milliseconds, e.g. 1597026383085
     pub u_time: UTCDateTime,
 }
@@ -797,11 +796,11 @@ pub struct InterestAccrued {
     #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub mgn_mode: Option<MarginMode>,
     #[serde(default)]
-    pub interest: FloatOpt,
+    pub interest: MaybeFloat,
     #[serde(default)]
-    pub interest_rate: FloatOpt,
+    pub interest_rate: MaybeFloat,
     #[serde(default)]
-    pub liab: FloatOpt,
+    pub liab: MaybeFloat,
     #[serde(deserialize_with = "deserialize_timestamp")]
     pub ts: DateTime<Utc>,
 }
@@ -810,9 +809,9 @@ pub struct InterestAccrued {
 #[serde(rename_all = "camelCase")]
 pub struct InterestLimitResponse {
     #[serde(default)]
-    pub debt: FloatOpt,
+    pub debt: MaybeFloat,
     #[serde(default)]
-    pub interest: FloatOpt,
+    pub interest: MaybeFloat,
     pub records: Vec<String>,
 }
 
@@ -820,22 +819,22 @@ pub struct InterestLimitResponse {
 #[serde(rename_all = "camelCase")]
 pub struct InterestLimit {
     #[serde(default)]
-    pub avail_loan: FloatOpt,
+    pub avail_loan: MaybeFloat,
     pub ccy: String,
     #[serde(default)]
-    pub interest: FloatOpt,
+    pub interest: MaybeFloat,
     #[serde(default)]
-    pub loan_quota: FloatOpt,
+    pub loan_quota: MaybeFloat,
     #[serde(default)]
-    pub pos_loan: FloatOpt,
+    pub pos_loan: MaybeFloat,
     #[serde(default)]
-    pub rate: FloatOpt,
+    pub rate: MaybeFloat,
     #[serde(default)]
-    pub surplus_lmt: FloatOpt,
+    pub surplus_lmt: MaybeFloat,
     #[serde(default)]
-    pub used_lmt: FloatOpt,
+    pub used_lmt: MaybeFloat,
     #[serde(default)]
-    pub used_loan: FloatOpt,
+    pub used_loan: MaybeFloat,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -847,10 +846,10 @@ pub struct OpenInterest {
     pub inst_id: String,
     // Open interest (cont)
     #[serde(default)]
-    pub oi: FloatOpt,
+    pub oi: MaybeFloat,
     // Open interest (coin)
     #[serde(default)]
-    pub oi_ccy: FloatOpt,
+    pub oi_ccy: MaybeFloat,
     // Data return time,  Unix timestamp format in milliseconds, e.g. 1597026383085
     #[serde(rename = "ts", deserialize_with = "deserialize_timestamp")]
     pub timestamp: DateTime<Utc>,
@@ -861,19 +860,18 @@ pub struct OpenInterest {
 pub struct FundingRate {
     // Instrument ID, e.g. BTC-USD-SWAP
     pub inst_id: String,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
     // Instrument type
     pub inst_type: InstrumentType,
     // Current funding rate
     #[serde(default)]
-    pub funding_rate: FloatOpt,
+    pub funding_rate: MaybeFloat,
     // Settlement time, Unix timestamp format in milliseconds, e.g. 1597026383085
     #[serde(deserialize_with = "deserialize_timestamp")]
     // Settlement time, Unix timestamp format in milliseconds, e.g. 1597026383085
     pub funding_time: DateTime<Utc>,
     // Forecasted funding rate for the next period
     #[serde(default)]
-    pub next_funding_rate: FloatOpt,
+    pub next_funding_rate: MaybeFloat,
     // Forecasted funding time for the next period , Unix timestamp format in milliseconds, e.g. 1597026383085
     #[serde(deserialize_with = "deserialize_timestamp")]
     pub next_funding_time: DateTime<Utc>,
@@ -888,10 +886,10 @@ pub struct FundingRateHistory {
     pub inst_id: String,
     // Predicted funding rate
     #[serde(default)]
-    pub funding_rate: FloatOpt,
+    pub funding_rate: MaybeFloat,
     // Actual funding rate
     #[serde(default)]
-    pub realized_rate: FloatOpt,
+    pub realized_rate: MaybeFloat,
     // Settlement time, Unix timestamp format in milliseconds, e.g. 1597026383085
     #[serde(deserialize_with = "deserialize_timestamp")]
     pub funding_time: DateTime<Utc>,
@@ -910,10 +908,10 @@ pub struct PriceLimit {
     pub inst_id: String,
     // Highest buy limit
     #[serde(default)]
-    pub buy_lmt: FloatOpt,
+    pub buy_lmt: MaybeFloat,
     // Lowest sell limit
     #[serde(default)]
-    pub sell_lmt: FloatOpt,
+    pub sell_lmt: MaybeFloat,
     // Data return time, Unix timestamp format in milliseconds, e.g. 1597026383085
     #[serde(deserialize_with = "deserialize_timestamp")]
     pub ts: DateTime<Utc>,
@@ -926,7 +924,7 @@ pub struct DiscountRateAndInterestFreeQuota {
     pub ccy: String,
     // Interest-free quota
     #[serde(default)]
-    pub amt: FloatOpt,
+    pub amt: MaybeFloat,
     // Discount rate level
     // 1:level 1
     // 2:level 2
@@ -951,34 +949,33 @@ pub struct OKXSystemTime {
 pub struct DiscountInfo {
     // Discount rate
     #[serde(default)]
-    pub discount_rate: FloatOpt,
+    pub discount_rate: MaybeFloat,
     // Tier - upper bound, "" means positive infinity
     #[serde(default)]
-    pub max_amt: FloatOpt,
+    pub max_amt: MaybeFloat,
     // Tier - lower bound, the minimum is 0
     #[serde(default)]
-    pub min_amt: FloatOpt,
+    pub min_amt: MaybeFloat,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MarkPrice {
-    /// Instrument ID, e.g. BTC-USD-200214
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub inst_type: InstrumentType,
     /// Instrument type
     /// MARGIN
     /// SWAP
     /// FUTURES
     /// OPTION
+    pub inst_type: InstrumentType,
+    /// Instrument ID, e.g. BTC-USD-200214
     pub inst_id: String,
     /// Mark price
     #[serde(rename = "markPx")]
     #[serde(default)]
-    pub mark_price: FloatOpt,
+    pub mark_price: MaybeFloat,
     /// Data return time, Unix timestamp format in milliseconds, e.g. 1597026383085
-    #[serde(rename = "ts", deserialize_with = "deserialize_timestamp")]
-    pub timestamp: DateTime<Utc>,
+    #[serde(rename = "ts", default)]
+    pub timestamp: MaybeU64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -997,29 +994,29 @@ pub struct PositionTier {
     /// The minimum borrowing amount or position of this gear is only applicable to margin/options/perpetual/delivery, the minimum position is 0 by default
     /// It will return the minimum borrowing amount when ccy takes effect.
     #[serde(default)]
-    pub min_sz: FloatOpt,
+    pub min_sz: MaybeFloat,
     /// The maximum borrowing amount or number of positions held in this position is only applicable to margin/options/perpetual/delivery
     /// It will return the maximum borrowing amount when ccy takes effect.
     #[serde(default)]
-    pub max_sz: FloatOpt,
+    pub max_sz: MaybeFloat,
     /// Maintenance margin requirement rate
     #[serde(default)]
-    pub mmr: FloatOpt,
+    pub mmr: MaybeFloat,
     /// Initial margin requirement rate
     #[serde(default)]
-    pub imr: FloatOpt,
+    pub imr: MaybeFloat,
     /// Maximum available leverage
     #[serde(default)]
-    pub max_lever: FloatOpt,
+    pub max_lever: MaybeFloat,
     /// Option Margin Coefficient (only applicable to options)
     #[serde(default)]
-    pub opt_mgn_factor: FloatOpt,
+    pub opt_mgn_factor: MaybeFloat,
     /// Quote currency borrowing amount (only applicable to leverage and the case when instId takes effect)
     #[serde(default)]
-    pub quote_max_loan: FloatOpt,
+    pub quote_max_loan: MaybeFloat,
     /// Base currency borrowing amount (only applicable to leverage and the case when instId takes effect)
     #[serde(default)]
-    pub base_max_loan: FloatOpt,
+    pub base_max_loan: MaybeFloat,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -1027,7 +1024,7 @@ pub struct PositionTier {
 pub struct InsuranceFund {
     /// The total balance of insurance fund, in USD
     #[serde(default)]
-    pub total: FloatOpt,
+    pub total: MaybeFloat,
     /// Instrument family
     /// Applicable to FUTURES/SWAP/OPTION
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -1043,7 +1040,7 @@ pub struct InsuranceFundDetail {
     pub balance: String,
     /// The change in the balance of insurance fund
     #[serde(default)]
-    pub amt: FloatOpt,
+    pub amt: MaybeFloat,
     /// The currency of insurance fund
     pub ccy: String,
     /// The type of insurance fund
@@ -1059,22 +1056,22 @@ pub struct IndexTicker {
     pub inst_id: String,
     /// Latest index price
     #[serde(default)]
-    pub idx_px: FloatOpt,
+    pub idx_px: MaybeFloat,
     /// Highest price in the past 24 hours
     #[serde(default)]
-    pub high_24h: FloatOpt,
+    pub high_24h: MaybeFloat,
     /// Lowest price in the past 24 hours
     #[serde(default)]
-    pub low_24h: FloatOpt,
+    pub low_24h: MaybeFloat,
     /// Open price in the past 24 hours
     #[serde(default)]
-    pub open_24h: FloatOpt,
+    pub open_24h: MaybeFloat,
     /// Open price in the UTC 0
     #[serde(default)]
-    pub sod_utc0: FloatOpt,
+    pub sod_utc0: MaybeFloat,
     /// Open price in the UTC 8
     #[serde(default)]
-    pub sod_utc8: FloatOpt,
+    pub sod_utc8: MaybeFloat,
     /// Index price update time, Unix timestamp format in milliseconds, e.g. 1597026383085
     pub ts: DateTime<Utc>,
 }
@@ -1087,16 +1084,16 @@ pub struct Candle {
     pub ts: DateTime<Utc>,
     /// Open price
     #[serde(default, rename = "o")]
-    pub open: FloatOpt,
+    pub open: MaybeFloat,
     /// highest price
     #[serde(default, rename = "h")]
-    pub high: FloatOpt,
+    pub high: MaybeFloat,
     /// Lowest price
     #[serde(default, rename = "l")]
-    pub low: FloatOpt,
+    pub low: MaybeFloat,
     /// Close price
     #[serde(default, rename = "c")]
-    pub close: FloatOpt,
+    pub close: MaybeFloat,
     /// The state of candlesticks.
     /// 0 represents that it is uncompleted, 1 represents that it is completed.
     pub confirm: CandleState,
@@ -1140,21 +1137,22 @@ impl<'a> Levels<'a> {
 #[serde(rename_all = "camelCase")]
 pub struct BookUpdate<'a> {
     // Checksum
-    pub checksum: Option<i64>,
+    #[serde(default)]
+    pub checksum: MaybeI64,
     /// Sequence ID of the current message
     pub seq_id: i64,
     /// Sequence ID of the last sent message. Only applicable to books, books-l2-tbt, books50-l2-tbt
     // FIXME: decide a default here. -1 ?
     #[serde(default)]
-    pub prev_seq_id: i64,
+    pub prev_seq_id: MaybeI64,
     /// Order book on sell side
     #[serde(borrow)]
     pub asks: Levels<'a>,
     /// Order book on bid side
     #[serde(borrow)]
     pub bids: Levels<'a>,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub ts: i64,
+    #[serde(default)]
+    pub ts: MaybeU64,
 }
 
 #[cfg(test)]
@@ -1269,10 +1267,10 @@ mod tests_parse_candle {
         let json = r#"["1597026383085","3.721","3.743","3.677","3.708","0"]"#;
         let candle: Candle = serde_json::from_str(json).unwrap();
         assert_eq!(candle.ts.timestamp_millis(), 1597026383085);
-        assert_eq!(candle.open, "3.721".parse().ok().into());
-        assert_eq!(candle.high, "3.743".parse().ok().into());
-        assert_eq!(candle.low, "3.677".parse().ok().into());
-        assert_eq!(candle.close, "3.708".parse().ok().into());
+        assert_eq!(*candle.open, "3.721".parse().ok().into());
+        assert_eq!(*candle.high, "3.743".parse().ok().into());
+        assert_eq!(*candle.low, "3.677".parse().ok().into());
+        assert_eq!(*candle.close, "3.708".parse().ok().into());
         assert_eq!(candle.confirm, super::CandleState::Uncompleted);
     }
 }
@@ -1301,53 +1299,53 @@ pub struct Currency {
     pub can_internal: bool,
     /// The minimum deposit amount of the currency in a single transaction
     #[serde(default)]
-    pub min_dep: FloatOpt,
+    pub min_dep: MaybeFloat,
     /// The minimum withdrawal amount of the currency in a single transaction
     #[serde(default)]
-    pub min_wd: FloatOpt,
+    pub min_wd: MaybeFloat,
     /// The maximum amount of currency withdrawal in a single transaction
     #[serde(default)]
-    pub max_wd: FloatOpt,
+    pub max_wd: MaybeFloat,
     /// The withdrawal precision, indicating the number of digits after the decimal point.
     #[serde(default)]
-    pub wd_tick_sz: FloatOpt,
+    pub wd_tick_sz: MaybeFloat,
     /// The withdrawal limit in the past 24 hours (including `on-chain withdrawal` and `internal transfer`), unit in `USD`
     #[serde(default)]
-    pub wd_quota: FloatOpt,
+    pub wd_quota: MaybeFloat,
     /// The amount of currency withdrawal used in the past 24 hours, unit in `USD`
     #[serde(default)]
-    pub used_wd_quota: FloatOpt,
+    pub used_wd_quota: MaybeFloat,
     /// The minimum withdrawal fee for normal address
     #[serde(default)]
-    pub min_fee: FloatOpt,
+    pub min_fee: MaybeFloat,
     /// The maximum withdrawal fee for normal address
     #[serde(default)]
-    pub max_fee: FloatOpt,
+    pub max_fee: MaybeFloat,
     /// The minimum withdrawal fee for contract address
     #[serde(default)]
-    pub min_fee_for_ct_addr: FloatOpt,
+    pub min_fee_for_ct_addr: MaybeFloat,
     /// The maximum withdrawal fee for contract address
     #[serde(default)]
-    pub max_fee_for_ct_addr: FloatOpt,
+    pub max_fee_for_ct_addr: MaybeFloat,
     /// If current chain is main net, then it will return `true`, otherwise it will return `false`
     pub main_net: bool,
     /// Whether tag/memo information is required for withdrawal, e.g. `EOS` will return `true`
     pub need_tag: bool,
     /// The minimum number of blockchain confirmations to acknowledge fund deposit. The account is credited after that, but the deposit can not be withdrawn
     #[serde(default)]
-    pub min_dep_arrival_confirm: FloatOpt,
+    pub min_dep_arrival_confirm: MaybeFloat,
     /// The minimum number of blockchain confirmations required for withdrawal of a deposit
     #[serde(default)]
-    pub min_wd_unlock_confirm: FloatOpt,
+    pub min_wd_unlock_confirm: MaybeFloat,
     /// The fixed deposit limit, unit in `USD`
     #[serde(default)]
-    pub dep_quota_fixed: FloatOpt,
+    pub dep_quota_fixed: MaybeFloat,
     /// The used amount of fixed deposit quota, unit in `USD`
     #[serde(default)]
-    pub used_dep_quota_fixed: FloatOpt,
+    pub used_dep_quota_fixed: MaybeFloat,
     /// The layer2 network daily deposit limit
     #[serde(default)]
-    pub dep_quote_daily_layer2: FloatOpt,
+    pub dep_quote_daily_layer2: MaybeFloat,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -1356,13 +1354,13 @@ pub struct FundingBalance {
     /// Available balance
     /// The balance that can be withdrawn or transferred or used for spot trading
     #[serde(default)]
-    pub avail_bal: FloatOpt,
+    pub avail_bal: MaybeFloat,
     /// Balance
     #[serde(default)]
-    pub bal: FloatOpt,
+    pub bal: MaybeFloat,
     /// Frozen balance
     #[serde(default)]
-    pub frozen_bal: FloatOpt,
+    pub frozen_bal: MaybeFloat,
     /// Currency
     pub ccy: String,
 }
@@ -1413,15 +1411,15 @@ pub struct FundTransferHistory {
     pub ccy: String,
     /// Amount to be transferred
     #[serde(default)]
-    pub amt: FloatOpt,
+    pub amt: MaybeFloat,
     /// Transfer type
     pub r#type: TransferType,
     pub from: AccountType,
     pub to: AccountType,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub sub_acct: Option<String>,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub state: FundTransferState,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub state: Option<FundTransferState>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -1462,7 +1460,7 @@ pub struct DepositHistory {
     pub chain: String,
     /// Deposit amount
     #[serde(default)]
-    pub amt: FloatOpt,
+    pub amt: MaybeFloat,
     /// Deposite account
     // If the deposit comes from an internal transfer, this field displays the account information of the internal transfer initiator, which can be mobile phone number, email address, account name, and will return "" in other cases
     pub from: String,
@@ -1474,7 +1472,6 @@ pub struct DepositHistory {
     /// Time that the deposit record is created, Unix timestamp format in milliseconds, e.g. 1655251200000
     #[serde(deserialize_with = "deserialize_timestamp")]
     pub ts: DateTime<Utc>,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
     pub state: DepositStatus,
     /// Actual amount of blockchain confirm in a single deposit
     pub actual_dep_blk_confirm: String,

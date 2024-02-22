@@ -3,8 +3,7 @@ use crate::api::v5::model::{
     StopLossTriggerPriceType, TakeProfitTriggerPriceType, TradeMode,
 };
 use crate::api::v5::{ExecType, Request, SelfTradePreventionMode};
-use crate::serde_util::{deserialize_from_opt_str, deserialize_timestamp, FloatOpt};
-use chrono::{DateTime, Utc};
+use crate::serde_util::{deserialize_from_opt_str, MaybeFloat, MaybeString, MaybeU64};
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
 use crate::websocket::WebsocketChannel;
@@ -23,11 +22,13 @@ pub struct CancelOrder {
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct CancelOrderData {
-    pub cl_ord_id: String,
+    #[serde(default)]
+    pub cl_ord_id: MaybeString,
     pub ord_id: String,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub s_code: u32,
-    pub s_msg: String,
+    #[serde(default)]
+    pub s_code: MaybeU64,
+    #[serde(default)]
+    pub s_msg: MaybeString,
 }
 
 impl Request for CancelOrder {
@@ -174,16 +175,20 @@ pub struct PlaceOrder {
 #[serde(rename_all = "camelCase")]
 pub struct PlaceOrderResponse {
     /// Order ID
-    pub ord_id: String,
+    #[serde(default)]
+    pub ord_id: MaybeString,
     /// Client Order ID as assigned by the client
-    pub cl_ord_id: String,
+    #[serde(default)]
+    pub cl_ord_id: MaybeString,
     /// Order tag
-    pub tag: String,
+    #[serde(default)]
+    pub tag: MaybeString,
     /// The code of the event execution result, 0 means success.
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub s_code: u32,
+    #[serde(default)]
+    pub s_code: MaybeU64,
     /// Rejection or success message of event execution.
-    pub s_msg: String,
+    #[serde(default)]
+    pub s_msg: MaybeString,
 }
 
 impl Request for PlaceOrder {
@@ -210,74 +215,74 @@ pub struct GetOrderDetails {
 pub struct OrderDetail {
     pub inst_type: InstrumentType,
     pub inst_id: String,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub tgt_ccy: Option<QuantityType>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub ccy: Option<String>,
+    #[serde(default)]
+    pub ccy: MaybeString,
     pub ord_id: String,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub cl_ord_id: Option<String>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub tag: Option<String>,
     #[serde(default)]
-    pub px: FloatOpt,
+    pub cl_ord_id: MaybeString,
     #[serde(default)]
-    pub sz: FloatOpt,
+    pub tag: MaybeString,
     #[serde(default)]
-    pub pnl: FloatOpt,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub px: MaybeFloat,
+    #[serde(default)]
+    pub sz: MaybeFloat,
+    #[serde(default)]
+    pub pnl: MaybeFloat,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub ord_type: Option<OrderType>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub side: Option<Side>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub pos_side: Option<PositionSide>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub td_mode: Option<TradeMode>,
     #[serde(default)]
-    pub acc_fill_sz: FloatOpt,
+    pub acc_fill_sz: MaybeFloat,
     #[serde(default)]
-    pub fill_px: FloatOpt,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub trade_id: Option<String>,
+    pub fill_px: MaybeFloat,
     #[serde(default)]
-    pub fill_sz: FloatOpt,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub fill_time: Option<u64>,
+    pub trade_id: MaybeString,
     #[serde(default)]
-    pub avg_px: FloatOpt,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub state: OrderState,
+    pub fill_sz: MaybeFloat,
     #[serde(default)]
-    pub lever: FloatOpt,
+    pub fill_time: MaybeU64,
     #[serde(default)]
-    pub tp_trigger_px: FloatOpt,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub avg_px: MaybeFloat,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub state: Option<OrderState>,
+    #[serde(default)]
+    pub lever: MaybeFloat,
+    #[serde(default)]
+    pub tp_trigger_px: MaybeFloat,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub tp_trigger_px_type: Option<TakeProfitTriggerPriceType>,
     #[serde(default)]
-    pub tp_ord_px: FloatOpt,
+    pub tp_ord_px: MaybeFloat,
     #[serde(default)]
-    pub sl_trigger_px: FloatOpt,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub sl_trigger_px: MaybeFloat,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub sl_trigger_px_type: Option<StopLossTriggerPriceType>,
     #[serde(default)]
-    pub sl_ord_px: FloatOpt,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub fee_ccy: Option<String>,
+    pub sl_ord_px: MaybeFloat,
     #[serde(default)]
-    pub fee: FloatOpt,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub rebate_ccy: Option<String>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub source: Option<String>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub rebate: Option<String>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub fee_ccy: MaybeString,
+    #[serde(default)]
+    pub fee: MaybeFloat,
+    #[serde(default)]
+    pub rebate_ccy: MaybeString,
+    #[serde(default)]
+    pub source: MaybeString,
+    #[serde(default)]
+    pub rebate: MaybeString,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub category: Option<Category>,
-    #[serde(deserialize_with = "deserialize_timestamp")]
-    pub u_time: DateTime<Utc>,
-    #[serde(deserialize_with = "deserialize_timestamp")]
-    pub c_time: DateTime<Utc>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default)]
+    pub u_time: MaybeU64,
+    #[serde(default)]
+    pub c_time: MaybeU64,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub exec_type: Option<ExecType>,
 }
 
@@ -296,64 +301,64 @@ pub struct OrderDetailRef<'a> {
     #[serde(default)]
     pub tag: Option<&'a str>,
     #[serde(default)]
-    pub px: FloatOpt,
+    pub px: MaybeFloat,
     #[serde(default)]
-    pub sz: FloatOpt,
+    pub sz: MaybeFloat,
     #[serde(default)]
-    pub pnl: FloatOpt,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub pnl: MaybeFloat,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub ord_type: Option<OrderType>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub side: Option<Side>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub pos_side: Option<PositionSide>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub td_mode: Option<TradeMode>,
     #[serde(default)]
-    pub acc_fill_sz: FloatOpt,
+    pub acc_fill_sz: MaybeFloat,
     #[serde(default)]
-    pub fill_px: FloatOpt,
+    pub fill_px: MaybeFloat,
     #[serde(default)]
     pub trade_id: Option<&'a str>,
     #[serde(default)]
-    pub fill_sz: FloatOpt,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub fill_time: Option<u64>,
+    pub fill_sz: MaybeFloat,
     #[serde(default)]
-    pub avg_px: FloatOpt,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub state: OrderState,
+    pub fill_time: MaybeU64,
     #[serde(default)]
-    pub lever: FloatOpt,
+    pub avg_px: MaybeFloat,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub state: Option<OrderState>,
     #[serde(default)]
-    pub tp_trigger_px: FloatOpt,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub lever: MaybeFloat,
+    #[serde(default)]
+    pub tp_trigger_px: MaybeFloat,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub tp_trigger_px_type: Option<TakeProfitTriggerPriceType>,
     #[serde(default)]
-    pub tp_ord_px: FloatOpt,
+    pub tp_ord_px: MaybeFloat,
     #[serde(default)]
-    pub sl_trigger_px: FloatOpt,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    pub sl_trigger_px: MaybeFloat,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub sl_trigger_px_type: Option<StopLossTriggerPriceType>,
     #[serde(default)]
-    pub sl_ord_px: FloatOpt,
+    pub sl_ord_px: MaybeFloat,
     #[serde(default)]
     pub fee_ccy: Option<&'a str>,
     #[serde(default)]
-    pub fee: FloatOpt,
+    pub fee: MaybeFloat,
     #[serde(default)]
     pub rebate_ccy: Option<&'a str>,
     #[serde(default)]
     pub source: Option<&'a str>,
     #[serde(default)]
     pub rebate: Option<&'a str>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub category: Option<Category>,
-    #[serde(deserialize_with = "deserialize_timestamp")]
-    pub u_time: DateTime<Utc>,
-    #[serde(deserialize_with = "deserialize_timestamp")]
-    pub c_time: DateTime<Utc>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default)]
+    pub u_time: MaybeU64,
+    #[serde(default)]
+    pub c_time: MaybeU64,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub exec_type: Option<ExecType>,
 }
 

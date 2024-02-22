@@ -144,20 +144,20 @@ impl Rest {
         // println!("{}", std::str::from_utf8(body.as_ref()).unwrap()); // DEBUG
 
         match serde_json::from_slice::<ApiResponse<R::Response>>(&body) {
-            Ok(ApiResponse { code, msg, data }) => match code {
-                0 => {
+            Ok(ApiResponse { code, msg, data }) => match *code {
+                Some(0) => {
                     if let Some(data) = data {
                         Ok(data)
                     } else {
                         Err(Error::Api(ApiError {
-                            code: Some(code),
+                            code: *code,
                             msg: Some("Success but empty response".to_owned()),
                             data: None,
-                            connId: None,
+                            conn_id: None,
                         }))
                     }
                 }
-                code => Err(Error::Api(ApiError { code: Some(code), msg: Some(msg), data, connId: None })),
+                code => Err(Error::Api(ApiError { code, msg: Some(msg), data, conn_id: None })),
             },
             Err(e) => {
                 log::debug!("{}", String::from_utf8_lossy(&body));

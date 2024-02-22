@@ -1,4 +1,6 @@
-use std::fmt::Debug;
+use crate::api::error::{ApiError, Error};
+use crate::api::v5::orderbook_trading::orders::websocket::OrdersChannel;
+use crate::api::v5::{AccountChannel, BalanceAndPositionChannel, OrderOp, PositionsChannel};
 use crate::{
     api::v5::Instruments,
     api::v5::MarkPrices,
@@ -8,9 +10,7 @@ use crate::{
 };
 use const_format::concatcp;
 use serde::Deserialize;
-use crate::api::error::{ApiError, Error};
-use crate::api::v5::{AccountChannel, BalanceAndPositionChannel, OrderOp, PositionsChannel};
-use crate::api::v5::orderbook_trading::orders::websocket::OrdersChannel;
+use std::fmt::Debug;
 
 fn deser_from_str<'a, T>(s: &'a str) -> serde_json::Result<T>
 where
@@ -46,12 +46,14 @@ impl_channel_match!(AccountChannel);
 impl_channel_match!(BalanceAndPositionChannel);
 impl_channel_match!(OrdersChannel);
 
-impl ChannelMatch for OrderOp { const CHANNEL_PATTERN: &'static str = r#""op":"order""#; }
+impl ChannelMatch for OrderOp {
+    const CHANNEL_PATTERN: &'static str = r#""op":"order""#;
+}
 
 #[cfg(test)]
 mod test_channel_match {
-    use crate::api::v5::Instruments;
     use crate::api::v5::ws_convert::ChannelMatch;
+    use crate::api::v5::Instruments;
     use crate::websocket::conn::Books;
 
     #[test]
@@ -95,12 +97,14 @@ where
             };
             if response.event == Some("error") {
                 log::error!("{:?}", response);
-                let WsResponse { data, code, conn_id, msg, .. } = response;
+                let WsResponse {
+                    code, conn_id, msg, ..
+                } = response;
                 return Err(Error::Api(ApiError {
                     code,
                     msg: msg.to_owned().map(str::to_string),
                     data: Some(()),
-                    connId: conn_id.to_owned().map(str::to_string),
+                    conn_id: conn_id.to_owned().map(str::to_string),
                 }));
             } else if response.event == Some("subscribe") || response.event == Some("unsubscribe") {
                 log::info!("{:?}", response);

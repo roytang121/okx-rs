@@ -1,6 +1,6 @@
 use crate::api::v5::Request;
 use crate::impl_string_enum;
-use crate::serde_util::{deserialize_from_opt_str, deserialize_timestamp, none};
+use crate::serde_util::{deserialize_from_opt_str, deserialize_timestamp};
 use chrono::{DateTime, Utc};
 use reqwest::Method;
 use rust_decimal::Decimal;
@@ -45,41 +45,41 @@ pub struct WithdrawalHistory {
     /// Chain name, e.g. USDT-ERC20, USDT-TRC20
     pub chain: String,
     /// Withdrawal amount
-    #[serde(default = "none", deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub amt: Option<Decimal>,
     /// Time the withdrawal request was submitted, Unix timestamp format in milliseconds, e.g. 1655251200000.
     #[serde(deserialize_with = "deserialize_timestamp")]
     pub ts: DateTime<Utc>,
     /// Withdrawal account
     /// It can be email/phone
-    #[serde(default = "none", deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub from: Option<String>,
     /// Receiving address
-    #[serde(default = "none", deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub to: Option<String>,
     /// Some currencies require a tag for withdrawals. This is not returned if not required.
-    #[serde(default = "none", deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub tag: Option<String>,
     /// Some currencies require a payment ID for withdrawals. This is not returned if not required.
-    #[serde(default = "none", deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub pmt_id: Option<String>,
     /// Some currencies require this parameter for withdrawals. This is not returned if not required.
-    #[serde(default = "none", deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub memo: Option<String>,
     /// Hash record of the withdrawal.
     /// This parameter will returned "" for internal transfers.
-    #[serde(default = "none", deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub tx_id: Option<String>,
     /// Withdrawal fee amount
-    #[serde(default = "none", deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub fee: Option<String>,
     /// Status of withdrawal
     pub state: WithdrawalStatus,
     /// Withdrawal ID
-    #[serde(default = "none", deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub wd_id: Option<String>,
     /// Client-supplied ID
-    #[serde(default = "none", deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub client_id: Option<String>,
 }
 
@@ -235,20 +235,20 @@ mod tests_get_withdrawal_history {
 #[serde(rename_all = "camelCase")]
 pub struct WithdrawalResponse {
     /// Withdrawal amount
-    #[serde(default = "none", deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub amt: Option<Decimal>,
     /// Currency
-    #[serde(default = "none", deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub ccy: Option<String>,
     /// Withdrawal ID
-    #[serde(default = "none", deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub wd_id: Option<String>,
     /// Client-supplied ID
     /// A combination of case-sensitive alphanumerics, all numbers, or all letters of up to 32 characters.
-    #[serde(default = "none", deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub client_id: Option<String>,
     /// Chain name, e.g. USDT-ERC20, USDT-TRC20
-    #[serde(default = "none", deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub chain: Option<String>,
 }
 

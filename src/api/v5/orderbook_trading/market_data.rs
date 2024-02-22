@@ -1,10 +1,7 @@
 use crate::api::v5::model::Side;
 use crate::api::v5::{IndexTicker, Request};
-use crate::serde_util::deserialize_from_str;
 use crate::serde_util::*;
-use chrono::{DateTime, Utc};
 use reqwest::Method;
-use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
 /// https://www.okx.com/docs-v5/en/#rest-api-market-data-get-index-tickers
@@ -42,17 +39,17 @@ pub struct BaseInterestRate {
     #[serde(rename = "ccy")]
     pub asset: String,
     #[serde(default)]
-    pub quota: FloatOpt,
+    pub quota: MaybeFloat,
     #[serde(default)]
-    pub rate: FloatOpt,
+    pub rate: MaybeFloat,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct InterestRateTier {
-    #[serde(rename = "irDiscount", deserialize_with = "deserialize_from_opt_str")]
-    pub discount: Option<Decimal>,
-    #[serde(rename = "loanQuotaCoef", deserialize_with = "deserialize_from_str")]
-    pub loan_quota_coef: Decimal,
+    #[serde(rename = "irDiscount", default, deserialize_with = "deserialize_from_opt_str")]
+    pub discount: Option<f64>,
+    #[serde(rename = "loanQuotaCoef", default, deserialize_with = "deserialize_from_opt_str")]
+    pub loan_quota_coef: Option<f64>,
     pub level: String,
 }
 
@@ -69,12 +66,10 @@ impl Request for GetInterestRates {
 pub struct TradeHistory {
     pub inst_id: String,
     pub trade_id: String,
-    pub px: Decimal,
-    pub sz: Decimal,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
+    pub px: f64,
+    pub sz: f64,
     pub side: Side,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_timestamp")]
-    pub ts: DateTime<Utc>,
+    pub ts: u64,
 }
 
 /// https://www.okx.com/docs-v5/en/#rest-api-market-data-get-trades-history

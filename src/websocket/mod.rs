@@ -2,7 +2,7 @@ use std::fmt::Debug;
 use std::os::fd::RawFd;
 
 use futures_util::stream::{SplitSink, SplitStream};
-use futures_util::{SinkExt, Stream, StreamExt, TryFutureExt, TryStreamExt};
+use futures_util::{SinkExt, TryStreamExt};
 use serde::Deserialize;
 use tokio::net::TcpStream;
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
@@ -154,7 +154,7 @@ impl<T> OutboundSync for std::sync::mpsc::Sender<T> {
 
     fn outbound(&mut self, msg: Self::Value) -> Result<()> {
         self.send(msg)
-            .map_err(|err| Error::Other("sync channel dropped".into()))
+            .map_err(|_| Error::Other("sync channel dropped".into()))
     }
 }
 
@@ -163,7 +163,7 @@ impl<T> OutboundSync for crossbeam_channel::Sender<T> {
 
     fn outbound(&mut self, msg: Self::Value) -> Result<()> {
         self.try_send(msg)
-            .map_err(|err| Error::Other("sync channel dropped".into()))
+            .map_err(|_| Error::Other("sync channel dropped".into()))
     }
 }
 
