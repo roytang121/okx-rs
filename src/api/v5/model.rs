@@ -1157,12 +1157,13 @@ pub struct BookUpdate<'a> {
 
 #[cfg(test)]
 mod test {
-    use crate::api::v5::BookUpdate;
+    use crate::api::v5::{BookUpdate, Levels};
 
     #[test]
     fn size_of_levels() {
         use std::mem::size_of;
-        assert_eq!(size_of::<BookUpdate>(), 536);
+        assert_eq!(size_of::<BookUpdate>(), 552);
+        assert_eq!(size_of::<Levels>(), 248);
     }
 }
 

@@ -526,6 +526,7 @@ mod tests_maybe_float {
     fn can_deser_maybe_float_missing_key() {
         #[derive(Debug, Deserialize, Default)]
         struct Foo {
+            #[serde(default)]
             bar: Maybe<f64>,
         }
         let s = r#"{ }"#;
@@ -583,6 +584,7 @@ mod tests_maybe_u64 {
     fn can_deser_maybe_u64_missing_key() {
         #[derive(Debug, Deserialize, Default)]
         struct Foo {
+            #[serde(default)]
             bar: Maybe<u64>,
         }
         let s = r#"{ }"#;
