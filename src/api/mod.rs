@@ -1,7 +1,7 @@
-use crate::rest_client::credential::Credential;
-use crate::rest_client::error::Error;
-use crate::rest_client::model::{ApiResponse, Request};
-use crate::rest_client::options::Options;
+use crate::api::credential::Credential;
+use crate::api::error::Error;
+use crate::api::options::Options;
+use crate::api::v5::{ApiResponse, Request};
 use chrono::{SecondsFormat, Utc};
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use reqwest::{Client, ClientBuilder, Method, Url};
@@ -13,8 +13,8 @@ use self::error::ApiError;
 
 pub mod credential;
 pub mod error;
-pub mod model;
 pub mod options;
+pub mod v5;
 
 #[derive(Debug, Clone)]
 pub struct Rest {
@@ -50,7 +50,7 @@ impl Rest {
     }
 
     #[inline]
-    pub async fn request<R>(&self, req: R) -> crate::rest_client::error::Result<R::Response>
+    pub async fn request<R>(&self, req: R) -> crate::api::error::Result<R::Response>
     where
         R: Request,
     {
@@ -62,7 +62,7 @@ impl Rest {
         &self,
         req: R,
         on_send: &mut (dyn FnMut() + Sync + Send),
-    ) -> crate::rest_client::error::Result<R::Response>
+    ) -> crate::api::error::Result<R::Response>
     where
         R: Request,
     {
@@ -144,19 +144,25 @@ impl Rest {
         // println!("{}", std::str::from_utf8(body.as_ref()).unwrap()); // DEBUG
 
         match serde_json::from_slice::<ApiResponse<R::Response>>(&body) {
-            Ok(ApiResponse { code, msg, data }) => match code {
-                0 => {
+            Ok(ApiResponse { code, msg, data }) => match *code {
+                Some(0) => {
                     if let Some(data) = data {
                         Ok(data)
                     } else {
                         Err(Error::Api(ApiError {
-                            code: 0,
-                            msg: "Success but empty response".to_owned(),
+                            code: *code,
+                            msg: Some("Success but empty response".to_owned()),
                             data: None,
+                            conn_id: None,
                         }))
                     }
                 }
-                code => Err(Error::Api(ApiError { code, msg, data })),
+                code => Err(Error::Api(ApiError {
+                    code,
+                    msg: Some(msg),
+                    data,
+                    conn_id: None,
+                })),
             },
             Err(e) => {
                 log::debug!("{}", String::from_utf8_lossy(&body));
@@ -169,7 +175,7 @@ impl Rest {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::rest_client::model::{GetInstruments, InstrumentType};
+
     use serde::Serialize;
     use serde_json::Value;
 
@@ -189,20 +195,6 @@ mod tests {
         let options = Options::default();
         let client = Rest::new(options);
         let response = client.request(GetAccountBalance::default()).await.unwrap();
-        println!("{:#?}", response);
-    }
-
-    #[tokio::test]
-    #[ignore]
-    async fn test_public_client() {
-        let options = Options::default();
-        let client = Rest::new(options);
-        let response = client
-            .request(GetInstruments {
-                inst_type: InstrumentType::Spot,
-            })
-            .await
-            .unwrap();
         println!("{:#?}", response);
     }
 }

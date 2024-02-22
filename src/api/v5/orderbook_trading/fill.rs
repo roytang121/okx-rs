@@ -1,9 +1,9 @@
-use crate::rest_client::model::{InstrumentType, Request, Side};
-use crate::serde_util::{deserialize_timestamp, serialize_timestamp};
+use crate::api::v5::model::{InstrumentType, Side};
+use crate::api::v5::Request;
+use crate::serde_util::{serialize_timestamp, MaybeFloat};
 use anyhow::bail;
 use chrono::{DateTime, Utc};
 use reqwest::Method;
-use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -29,10 +29,7 @@ impl FromStr for ExecType {
 #[derive(Debug, Serialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct GetFillHistory {
-    #[serde(
-        skip_serializing_if = "Option::is_none",
-        serialize_with = "crate::serde_util::serialize_as_str_opt"
-    )]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub inst_type: Option<InstrumentType>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub uly: Option<String>,
@@ -61,28 +58,56 @@ pub struct GetFillHistory {
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FillHistory {
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
     pub inst_type: InstrumentType,
     pub inst_id: String,
-    pub trade_id: String,
-    pub ord_id: String,
-    pub cl_ord_id: String,
-    pub bill_id: String,
+    #[serde(
+        default,
+        deserialize_with = "crate::serde_util::deserialize_from_opt_str"
+    )]
+    pub trade_id: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "crate::serde_util::deserialize_from_opt_str"
+    )]
+    pub ord_id: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "crate::serde_util::deserialize_from_opt_str"
+    )]
+    pub cl_ord_id: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "crate::serde_util::deserialize_from_opt_str"
+    )]
+    pub bill_id: Option<String>,
     pub tag: String,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub fill_px: Decimal,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub fill_sz: Decimal,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
+    #[serde(default)]
+    pub fill_px: MaybeFloat,
+    #[serde(default)]
+    pub fill_sz: MaybeFloat,
     pub side: Side,
-    pub pos_side: String,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub exec_type: ExecType,
-    pub fee_ccy: String,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub fee: Decimal,
-    #[serde(deserialize_with = "deserialize_timestamp")]
-    pub ts: DateTime<Utc>,
+    #[serde(
+        default,
+        deserialize_with = "crate::serde_util::deserialize_from_opt_str"
+    )]
+    pub pos_side: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "crate::serde_util::deserialize_from_opt_str"
+    )]
+    pub exec_type: Option<ExecType>,
+    #[serde(
+        default,
+        deserialize_with = "crate::serde_util::deserialize_from_opt_str"
+    )]
+    pub fee_ccy: Option<String>,
+    #[serde(default)]
+    pub fee: MaybeFloat,
+    #[serde(
+        default,
+        deserialize_with = "crate::serde_util::deserialize_from_opt_str"
+    )]
+    pub ts: Option<u64>,
 }
 
 impl Request for GetFillHistory {

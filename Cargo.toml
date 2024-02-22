@@ -2,23 +2,48 @@
 name = "okx-rs"
 version = "0.1.0"
 edition = "2021"
-description = "Rust Library for the OKX V5 API"
+description = "Unofficial Rust Library for the OKX V5 API"
+repository = "https://github.com/roytang121/okx-rs/"
 license = "MIT OR Apache-2.0"
+keywords = ["okx", "crypto", "exchange", "trading"]
+authors = ["Roy Tang <me@roytang.me>"]
+readme = "./README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-reqwest = { version = "0.11.13", features = ["json"] }
-base64 = "0.13.0"
-ring = "0.16.20"
+anyhow = { version = "1.0.75", features = ["backtrace"] }
 thiserror = "1"
-chrono = { version = "0.4", features = ["serde"] }
+base64 = "0.13.0"
 serde = { version = "1.0", features = ["derive"] }
-serde_json = {version = "1.0", features = ["arbitrary_precision"]}
+serde_json = { version = "1.0", features = ["arbitrary_precision"] }
 serde_qs = "0.10.1"
-rust_decimal = "1.27.0"
-anyhow = { version = "1.0.68", features = ["backtrace"] }
-log = "0.4.17"
+url = "2.4.1"
+sha2 = { version = "0.10", default-features = false }
+digest = { version = "0.10", features = ["dev"] }
+hmac = { version = "0.12.1", features = [] }
+const_format = "0.2"
 
-[dev-dependencies]
-tokio = { version = "1.18.2", features = ["full", "time", "sync", "tracing"] }
+# FIXME: to be removed
+tokio-tungstenite = { version = "0.20.1", features = ["native-tls"] }
+tokio = { version = "1.0.0", features = ["rt", "rt-multi-thread", "macros"] }
+chrono = { version = "0.4", features = ["serde"] }
+rust_decimal = "1.32.0"
+crossbeam-channel = "0.5.8"
+async-trait = "0.1.73"
+futures-util = "0.3.28"
+
+# FIXME: should be feature-gated
+log = "0.4.20"
+simd-json = { version = "0.13.4", features = ["runtime-detection", "known-key"] }
+tungstenite = { version = "0.20.1", features = ["native-tls"] }
+reqwest = { version = "0.11.22", features = ["json"] }
+
+# FIXME: [dev-dependencies]
+dotenv = "0.15.0"
+env_logger = { version = "0.10.0", features = [] }
+
+[features]
+default = []
+vip = []
+simd = []
