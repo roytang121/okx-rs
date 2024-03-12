@@ -1162,7 +1162,7 @@ mod test {
     #[test]
     fn size_of_levels() {
         use std::mem::size_of;
-        assert_eq!(size_of::<BookUpdate>(), 552);
+        assert_eq!(size_of::<BookUpdate>(), 560);
         assert_eq!(size_of::<Levels>(), 248);
     }
 }

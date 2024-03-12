@@ -1,6 +1,5 @@
 use crate::api::options::Options;
 use crate::api::Rest;
-use dotenv::dotenv;
 use std::future::Future;
 
 #[allow(clippy::manual_async_fn)]
@@ -20,7 +19,8 @@ where
     C: FnOnce(Rest) -> Fut,
     Fut: Future<Output = ()>,
 {
-    dotenv().expect("Failed to read .env file");
+    #[cfg(feature = "dotenv")]
+    dotenv::dotenv().expect("Failed to read .env file");
 
     async move {
         let api_key = std::env::var("OKX_API_KEY").expect("OKX_API_KEY not set");

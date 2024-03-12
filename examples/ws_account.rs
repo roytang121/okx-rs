@@ -1,13 +1,13 @@
 use log::info;
 use tungstenite::Message;
-use url::Url;
+
 
 use okx_rs::api::options::Options;
 use okx_rs::api::v5::ws_convert::TryParseEvent;
 use okx_rs::api::v5::{
     AccountChannel, BalanceAndPositionChannel, InstrumentType, PositionsChannel,
 };
-use okx_rs::websocket::async_client::OKXAuth;
+use okx_rs::websocket::OKXAuth;
 use okx_rs::websocket::WebsocketChannel;
 
 #[tokio::main]
