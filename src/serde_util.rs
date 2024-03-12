@@ -1,7 +1,7 @@
 use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::de::Error;
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
-use std::fmt::Display;
+use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
 use std::str::FromStr;
 
@@ -339,8 +339,26 @@ pub type MaybeU64 = Maybe<u64>;
 pub type MaybeI64 = Maybe<i64>;
 pub type MaybeString = Maybe<String>;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Maybe<T>(pub Option<T>);
+
+impl <T: std::fmt::Debug> std::fmt::Debug for Maybe<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match &self.0 {
+            Some(v) => write!(f, "Maybe({:?})", v),
+            None => write!(f, "None"),
+        }
+    }
+}
+
+impl <T: std::fmt::Display> std::fmt::Display for Maybe<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match &self.0 {
+            Some(v) => write!(f, "{}", v),
+            None => write!(f, ""),
+        }
+    }
+}
 
 impl<T> Default for Maybe<T> {
     fn default() -> Self {

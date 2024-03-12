@@ -1140,7 +1140,7 @@ pub struct BookUpdate<'a> {
     #[serde(default)]
     pub checksum: MaybeI64,
     /// Sequence ID of the current message
-    pub seq_id: i64,
+    pub seq_id: MaybeI64,
     /// Sequence ID of the last sent message. Only applicable to books, books-l2-tbt, books50-l2-tbt
     // FIXME: decide a default here. -1 ?
     #[serde(default)]
