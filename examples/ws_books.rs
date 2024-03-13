@@ -10,42 +10,14 @@ fn main() {
     println!("Response contains the following headers:");
     println!("{:?}", response.headers());
 
-    client
-        .send(
-            Books5 {
-                inst_id: "BTC-USDT-SWAP".into(),
-            }
-            .subscribe_message()
-            .into(),
-        )
-        .unwrap();
-    client
-        .send(
-            Books5 {
-                inst_id: "BTC-USDT".into(),
-            }
-            .subscribe_message()
-            .into(),
-        )
-        .unwrap();
-    client
-        .send(
-            Books5 {
-                inst_id: "ETH-USDT-SWAP".into(),
-            }
-            .subscribe_message()
-            .into(),
-        )
-        .unwrap();
-    client
-        .send(
-            Books5 {
-                inst_id: "ETH-USDT".into(),
-            }
-            .subscribe_message()
-            .into(),
-        )
-        .unwrap();
+    let symbols = vec!["BTC-USDT-SWAP", "BTC-USDT", "ETH-USDT-SWAP", "ETH-USDT"];
+
+    for symbol in symbols {
+        let channel = Books5 {
+            inst_id: symbol.into(),
+        };
+        client.send(channel.subscribe_message().into()).unwrap();
+    }
 
     loop {
         let msg = client.read().unwrap();
