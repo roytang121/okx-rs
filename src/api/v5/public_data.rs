@@ -2,7 +2,6 @@ use crate::api::v5::{FundingRate, MarkPrice, TradeMode};
 use crate::{api::v5::Request, serde_util::*};
 use chrono::{DateTime, Utc};
 use reqwest::Method;
-use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
 use crate::api::v5::model::{
@@ -663,7 +662,7 @@ pub mod rest {
         /// Index
         pub index: String,
         /// Latest Index Price
-        pub last: Decimal,
+        pub last: f64,
         /// Data generation time, Unix timestamp format in milliseconds, e.g. 1597026383085
         #[serde(deserialize_with = "deserialize_timestamp")]
         pub ts: DateTime<Utc>,
@@ -679,11 +678,11 @@ pub mod rest {
         /// Name of Exchange Trading Pairs
         pub symbol: String,
         /// Price of Exchange Trading Pairs
-        pub sym_px: Decimal,
+        pub sym_px: f64,
         /// Weights
-        pub wgt: Decimal,
+        pub wgt: f64,
         /// Price converted to index
-        pub cnv_px: Decimal,
+        pub cnv_px: f64,
     }
 }
 // Websockets

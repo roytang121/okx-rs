@@ -188,13 +188,4 @@ mod tests {
         const AUTH: bool = true;
         type Response = Value;
     }
-
-    #[tokio::test]
-    #[ignore]
-    async fn test_private_client() {
-        let options = Options::default();
-        let client = Rest::new(options);
-        let response = client.request(GetAccountBalance::default()).await.unwrap();
-        println!("{:#?}", response);
-    }
 }

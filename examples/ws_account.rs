@@ -1,7 +1,6 @@
 use log::info;
 use tungstenite::Message;
 
-
 use okx_rs::api::options::Options;
 use okx_rs::api::v5::ws_convert::TryParseEvent;
 use okx_rs::api::v5::{
@@ -10,8 +9,7 @@ use okx_rs::api::v5::{
 use okx_rs::websocket::OKXAuth;
 use okx_rs::websocket::WebsocketChannel;
 
-#[tokio::main]
-async fn main() {
+fn main() {
     dotenv::dotenv().ok();
     env_logger::init();
 

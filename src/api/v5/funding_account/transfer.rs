@@ -2,9 +2,8 @@
 
 use crate::api::v5::model::{AccountType, FundTransferHistory, TransferType};
 use crate::api::v5::Request;
-use crate::serde_util::deserialize_from_opt_str;
+use crate::serde_util::{deserialize_from_opt_str, MaybeFloat};
 use reqwest::Method;
-use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
 /// https://www.okx.com/docs-v5/en/#funding-account-rest-api-get-funds-transfer-state
@@ -78,7 +77,8 @@ pub struct FundsTransfer {
     /// Transfer currency, e.g. USDT
     pub ccy: String,
     /// Amount to be transferred
-    pub amt: Decimal,
+    #[serde(default)]
+    pub amt: MaybeFloat,
     /// The remitting account
     #[serde(serialize_with = "crate::serde_util::serialize_as_str")]
     pub from: AccountType,

@@ -1,9 +1,8 @@
 use crate::api::v5::Request;
 use crate::impl_string_enum;
-use crate::serde_util::{deserialize_from_opt_str, deserialize_timestamp};
+use crate::serde_util::{deserialize_from_opt_str, deserialize_timestamp, MaybeFloat};
 use chrono::{DateTime, Utc};
 use reqwest::Method;
-use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
@@ -45,8 +44,8 @@ pub struct WithdrawalHistory {
     /// Chain name, e.g. USDT-ERC20, USDT-TRC20
     pub chain: String,
     /// Withdrawal amount
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
-    pub amt: Option<Decimal>,
+    #[serde(default)]
+    pub amt: MaybeFloat,
     /// Time the withdrawal request was submitted, Unix timestamp format in milliseconds, e.g. 1655251200000.
     #[serde(deserialize_with = "deserialize_timestamp")]
     pub ts: DateTime<Utc>,
@@ -103,7 +102,7 @@ pub struct WithdrawalRequest {
     /// Withdrawal amount
     /// Withdrawal fee is not included in withdrawal amount.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub amt: Option<Decimal>,
+    pub amt: MaybeFloat,
     /// Withdrawal method
     /// 3: internal transfer
     /// 4: on-chain withdrawal
@@ -214,29 +213,12 @@ impl Request for GetWithdrawalHistory {
     type Response = Vec<WithdrawalHistory>;
 }
 
-#[cfg(test)]
-mod tests_get_withdrawal_history {
-    use super::*;
-    use crate::api::v5::testkit::with_env_private_client;
-
-    #[tokio::test]
-    #[ignore]
-    async fn test_deser() {
-        with_env_private_client(|rest| async move {
-            let req = GetWithdrawalHistory::default();
-            let rval = rest.request(req).await.unwrap();
-            println!("{:#?}", rval);
-        })
-        .await;
-    }
-}
-
 #[derive(Debug, Clone, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct WithdrawalResponse {
     /// Withdrawal amount
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
-    pub amt: Option<Decimal>,
+    #[serde(default)]
+    pub amt: MaybeFloat,
     /// Currency
     #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub ccy: Option<String>,

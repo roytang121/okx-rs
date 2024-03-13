@@ -342,7 +342,7 @@ pub type MaybeString = Maybe<String>;
 #[derive(Clone)]
 pub struct Maybe<T>(pub Option<T>);
 
-impl <T: std::fmt::Debug> std::fmt::Debug for Maybe<T> {
+impl<T: std::fmt::Debug> std::fmt::Debug for Maybe<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self.0 {
             Some(v) => write!(f, "Maybe({:?})", v),
@@ -351,7 +351,7 @@ impl <T: std::fmt::Debug> std::fmt::Debug for Maybe<T> {
     }
 }
 
-impl <T: std::fmt::Display> std::fmt::Display for Maybe<T> {
+impl<T: std::fmt::Display> std::fmt::Display for Maybe<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self.0 {
             Some(v) => write!(f, "{}", v),
@@ -497,8 +497,8 @@ enum StringOrFloat<'a> {
 
 #[cfg(test)]
 mod tests_maybe_float {
-    use super::Maybe;
-    use serde::Deserialize;
+    use super::{Maybe, MaybeFloat};
+    use serde::{Deserialize, Serialize};
 
     #[test]
     fn can_deser_maybe_float() {
@@ -550,6 +550,23 @@ mod tests_maybe_float {
         let s = r#"{ }"#;
         let m = serde_json::from_str::<Foo>(s).unwrap();
         assert_eq!(*m.bar, None);
+    }
+
+    #[test]
+    fn test_ser_maybe_float() {
+        #[derive(Debug, Serialize)]
+        struct Foo {
+            bar: MaybeFloat,
+        }
+        let f = Foo {
+            bar: Maybe(Some(1.23)),
+        };
+        let s = serde_json::to_string(&f).unwrap();
+        assert_eq!(s, r#"{"bar":"1.23"}"#);
+
+        let f = Foo { bar: Maybe(None) };
+        let s = serde_json::to_string(&f).unwrap();
+        assert_eq!(s, r#"{"bar":null}"#);
     }
 }
 

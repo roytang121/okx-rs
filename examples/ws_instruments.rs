@@ -25,7 +25,7 @@ fn main() {
             }
             _ => continue,
         };
-        
+
         match Instruments::try_parse(&msg) {
             Ok(Some(resp)) => match resp.data {
                 Some(instruments) => {

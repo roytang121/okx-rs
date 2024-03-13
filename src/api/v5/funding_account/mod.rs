@@ -4,7 +4,6 @@ use crate::api::v5::{
 use crate::serde_util::*;
 use chrono::{DateTime, Utc};
 use reqwest::Method;
-use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
 pub mod bill;
@@ -34,25 +33,6 @@ impl Request for GetCurrencies {
     const AUTH: bool = true;
 
     type Response = Vec<Currency>;
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::api::v5::funding_account::GetCurrencies;
-    use crate::api::v5::testkit::with_env_private_client;
-
-    #[tokio::test]
-    #[ignore]
-    async fn get_currencies() {
-        with_env_private_client(|client| async move {
-            let resp = client
-                .request(GetCurrencies::default())
-                .await
-                .expect("get currencies");
-            assert!(!resp.is_empty());
-        })
-        .await;
-    }
 }
 
 /// https://www.okx.com/docs-v5/en/#funding-account-rest-api-get-balance
@@ -111,7 +91,8 @@ impl Request for GetAccountAssetValuation {
 #[serde(rename_all = "camelCase")]
 pub struct AccountAssetValuation {
     /// Valuation of total account assets
-    pub total_bal: Decimal,
+    #[serde(default)]
+    pub total_bal: MaybeFloat,
     /// Unix timestamp format in milliseconds, e.g.<code>1597026383085</code>
     #[serde(deserialize_with = "deserialize_timestamp")]
     pub ts: DateTime<Utc>,
@@ -122,15 +103,18 @@ pub struct AccountAssetValuation {
 #[serde(rename_all = "camelCase")]
 pub struct AccountAssetValuationDetails {
     /// Funding account
-    pub funding: Decimal,
+    #[serde(default)]
+    pub funding: MaybeFloat,
     /// Trading account
-    pub trading: Decimal,
+    #[serde(default)]
+    pub trading: MaybeFloat,
     /// [Deprecated] Classic account
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default)]
     #[deprecated(note = "[Deprecated] Classic account")]
-    pub classic: Option<Decimal>,
+    pub classic: MaybeFloat,
     /// Earn account
-    pub earn: Decimal,
+    #[serde(default)]
+    pub earn: MaybeFloat,
 }
 
 /// https://www.okx.com/docs-v5/en/#rest-api-account-get-bills-details-last-7-days

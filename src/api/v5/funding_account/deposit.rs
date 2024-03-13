@@ -102,24 +102,6 @@ impl Request for GetDepositHistory {
     type Response = Vec<DepositHistory>;
 }
 
-// gen test get deposit history
-#[cfg(test)]
-mod tests_get_deposit_history {
-    use super::*;
-    use crate::api::v5::testkit::with_env_private_client;
-
-    #[tokio::test]
-    #[ignore]
-    async fn test_deser() {
-        with_env_private_client(|rest| async move {
-            let req = GetDepositHistory::default();
-            let rval = rest.request(req).await.unwrap();
-            println!("{:?}", rval);
-        })
-        .await;
-    }
-}
-
 /// https://www.okx.com/docs-v5/en/#funding-account-rest-api-get-deposit-address
 /// ## Get deposit address
 /// Retrieve the deposit addresses of currencies, including previously-used addresses.

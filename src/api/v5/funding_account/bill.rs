@@ -1,16 +1,17 @@
 //! https://www.okx.com/docs-v5/en/#rest-api-funding-get-funds-transfer-state
 
+use std::str::FromStr;
+
+use chrono::{DateTime, Utc};
+use reqwest::Method;
+use serde::{Deserialize, Serialize};
+
 use crate::api::v5::model::{InstrumentType, MarginMode};
 use crate::api::v5::{ExecType, Request};
 use crate::impl_string_enum;
 use crate::serde_util::{
-    deserialize_from_opt_str, deserialize_timestamp, deserialize_timestamp_opt, MaybeString,
+    deserialize_from_opt_str, deserialize_timestamp, MaybeFloat, MaybeString, MaybeU64,
 };
-use chrono::{DateTime, Utc};
-use reqwest::Method;
-use rust_decimal::Decimal;
-use serde::{Deserialize, Serialize};
-use std::str::FromStr;
 
 #[derive(Debug, Clone)]
 pub enum AssetBillType {
@@ -376,27 +377,6 @@ pub struct AssetBill {
     pub ts: Option<u64>,
 }
 
-// gen test for get_asset_bills
-#[cfg(test)]
-mod tests_get_asset_bills {
-    use crate::api::v5::funding_account::GetAssetBills;
-    use crate::api::v5::testkit::with_env_private_client;
-
-    #[tokio::test]
-    #[ignore]
-    async fn test_deser() {
-        with_env_private_client(|client| async move {
-            let resp = client
-                .request(GetAssetBills::default())
-                .await
-                .expect("get asset bills");
-            println!("{:?}", resp);
-            assert!(!resp.is_empty());
-        })
-        .await;
-    }
-}
-
 /// https://www.okx.com/docs-v5/en/#rest-api-subaccount-history-of-sub-account-transfer
 #[derive(Debug, Clone, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
@@ -405,14 +385,18 @@ pub struct GetSubAccountBills {}
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SubAccountBill {
-    pub bill_id: String,
-    pub ccy: String,
-    pub amt: Decimal,
+    #[serde(default)]
+    pub bill_id: MaybeString,
+    #[serde(default)]
+    pub ccy: MaybeString,
+    #[serde(default)]
+    pub amt: MaybeFloat,
     #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
     pub r#type: SubAccountBillType,
-    pub sub_acct: String,
-    #[serde(default, deserialize_with = "deserialize_timestamp_opt")]
-    pub ts: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub sub_acct: MaybeString,
+    #[serde(default)]
+    pub ts: MaybeU64,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -453,27 +437,27 @@ pub struct AccountBill {
     pub sub_type: AccountBillSubType,
     #[serde(deserialize_with = "deserialize_timestamp")]
     pub ts: DateTime<Utc>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub bal_chg: Option<Decimal>,
-    // #[serde(deserialize_with = "deserialize_from_opt_str")]
-    // pub post_bal_chg: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub bal: Option<Decimal>,
-    // #[serde(deserialize_with = "deserialize_from_opt_str")]
-    // pub post_bal: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub sz: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub ccy: Option<String>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub fee: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default)]
+    pub bal_chg: MaybeFloat,
+    #[serde(default)]
+    pub post_bal_chg: MaybeFloat,
+    #[serde(default)]
+    pub bal: MaybeFloat,
+    #[serde(default)]
+    pub post_bal: MaybeFloat,
+    #[serde(default)]
+    pub sz: MaybeFloat,
+    #[serde(default)]
+    pub ccy: MaybeString,
+    #[serde(default)]
+    pub fee: MaybeFloat,
+    #[serde(default)]
     pub mgn_mode: Option<MarginMode>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub inst_id: Option<String>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub ord_id: Option<String>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default)]
+    pub inst_id: MaybeString,
+    #[serde(default)]
+    pub ord_id: MaybeString,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub exec_type: Option<ExecType>,
 }
 
