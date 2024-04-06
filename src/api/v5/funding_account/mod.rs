@@ -2,7 +2,7 @@ use crate::api::v5::{
     AccountBill, AccountBillSubType, AccountBillType, AssetBill, Currency, FundingBalance, Request,
 };
 use crate::serde_util::*;
-use chrono::{DateTime, Utc};
+
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
 

@@ -1,8 +1,6 @@
-use crate::api::v5::DepositStatus;
 use crate::impl_string_enum;
 use crate::serde_util::*;
-use crate::time::UTCDateTime;
-use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
+
 use serde::de::{Error, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::fmt::{Display, Formatter};
@@ -147,6 +145,17 @@ impl_string_enum!(FundTransferState,
 impl_string_enum!(SubAccountBillType,
     MasterToSubAccount => "0",
     SubAccountToMaster => "1",
+);
+impl_string_enum!(DepositStatus,
+    Unknown,
+    WaitingForConfirmation => "0",
+    DepositCredited => "1",
+    DepositSuccessful => "2",
+    Pending => "8",
+    MatchAddressBlacklist => "11",
+    AccountOrDepositFrozen => "12",
+    SubAccountDepositInterception => "13",
+    KycLimit => "14",
 );
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -295,6 +304,24 @@ pub enum SelfTradePreventionMode {
 pub enum SubAccountBillType {
     MasterToSubAccount,
     SubAccountToMaster,
+}
+
+#[derive(Debug, Clone)]
+pub enum DepositStatus {
+    WaitingForConfirmation,
+    DepositCredited,
+    DepositSuccessful,
+    /// pending due to temporary deposit suspension on this crypto currency
+    Pending,
+    /// match the address blacklist
+    MatchAddressBlacklist,
+    /// account or deposit is frozen
+    AccountOrDepositFrozen,
+    /// sub-account deposit interception
+    SubAccountDepositInterception,
+    /// KYC Limit
+    KycLimit,
+    Unknown(String),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -1075,7 +1102,7 @@ pub struct InsuranceFundDetail {
     /// The type of insurance fund
     pub r#type: String,
     /// The update timestamp of insurance fund. Unix timestamp format in milliseconds, e.g. 1597026383085
-    pub ts: DateTime<Utc>,
+    pub ts: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -1102,7 +1129,8 @@ pub struct IndexTicker {
     #[serde(default)]
     pub sod_utc8: MaybeFloat,
     /// Index price update time, Unix timestamp format in milliseconds, e.g. 1597026383085
-    pub ts: DateTime<Utc>,
+    #[serde(default)]
+    pub ts: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize)]

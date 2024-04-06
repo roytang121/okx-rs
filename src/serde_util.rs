@@ -1,4 +1,3 @@
-use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::de::Error;
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::{Display, Formatter};
@@ -20,42 +19,6 @@ where
         },
         _ => Ok(None),
     }
-}
-
-/// Deserialize a string into a `DateTime<Utc>`.
-pub fn deserialize_timestamp<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let s = String::deserialize(deserializer)?;
-    let time_ms =
-        i64::from_str(&s).map_err(|err| D::Error::custom(format!("invalid time_ms {s}. {err}")))?;
-    let ndt = NaiveDateTime::from_timestamp_millis(time_ms).unwrap();
-    Ok(ndt.and_local_timezone(Utc).unwrap())
-}
-
-/// Deserialize a string into an `Option<DateTime<Utc>>`.
-pub fn deserialize_timestamp_opt<'de, D>(deserializer: D) -> Result<Option<DateTime<Utc>>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let s = String::deserialize(deserializer)?;
-    match s.as_str() {
-        "" => Ok(None),
-        s => {
-            let time_ms = i64::from_str(s)
-                .map_err(|err| D::Error::custom(format!("invalid time_ms {s}. {err}")))?;
-            let ndt = NaiveDateTime::from_timestamp_millis(time_ms).unwrap();
-            Ok(Some(ndt.and_local_timezone(Utc).unwrap()))
-        }
-    }
-}
-
-pub fn serialize_timestamp<S>(dt: &Option<DateTime<Utc>>, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    serializer.serialize_str(&dt.unwrap().timestamp_millis().to_string())
 }
 
 #[macro_export]
@@ -217,7 +180,7 @@ pub const fn none<T>() -> Option<T> {
 }
 #[cfg(test)]
 mod tests_maybe_string {
-    use super::*;
+
     use serde::Deserialize;
 
     #[test]
@@ -272,55 +235,6 @@ mod tests_maybe_string {
         }"#;
         let m = serde_json::from_str::<Foo>(s).unwrap();
         assert!(m.bar.is_none());
-    }
-}
-
-// serde util for time
-#[derive(Debug)]
-pub struct Timestamp(DateTime<Utc>);
-
-impl<'de> Deserialize<'de> for Timestamp {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        // TODO: detect microsecond timestmap
-        let time_ms = i64::from_str(&s)
-            .map_err(|err| D::Error::custom(format!("invalid time_ms {s}. {err}")))?;
-        let ndt = NaiveDateTime::from_timestamp_millis(time_ms).unwrap();
-        Ok(Timestamp(ndt.and_local_timezone(Utc).unwrap()))
-    }
-}
-
-impl AsRef<DateTime<Utc>> for Timestamp {
-    fn as_ref(&self) -> &DateTime<Utc> {
-        &self.0
-    }
-}
-
-// generate test for test deser Timestamp from json
-#[cfg(test)]
-mod tests_timestamp {
-    use super::Timestamp;
-    use chrono::DateTime;
-    use serde::Deserialize;
-
-    #[derive(Debug, Deserialize)]
-    struct Foo {
-        bar: Timestamp,
-    }
-
-    #[test]
-    fn test_deser_timestamp() {
-        let s = r#"{
-            "bar": "1610000000000"
-        }"#;
-        let m = serde_json::from_str::<Foo>(s).unwrap();
-        assert_eq!(
-            m.bar.as_ref(),
-            &DateTime::parse_from_rfc3339("2021-01-07T06:13:20Z").unwrap()
-        );
     }
 }
 
@@ -600,7 +514,7 @@ mod tests_maybe_float {
 
 #[cfg(test)]
 mod tests_maybe_u64 {
-    use super::{deserialize_from_opt_str, Maybe};
+    use super::Maybe;
     use serde::Deserialize;
 
     #[test]

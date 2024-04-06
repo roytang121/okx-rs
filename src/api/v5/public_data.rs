@@ -1,6 +1,5 @@
+use crate::api::v5::Request;
 use crate::api::v5::{FundingRate, MarkPrice, TradeMode};
-use crate::{api::v5::Request, serde_util::*};
-use chrono::{DateTime, Utc};
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
 
@@ -71,16 +70,10 @@ pub mod rest {
         pub underlying: Option<String>,
         #[serde(skip_serializing_if = "Option::is_none")]
         pub inst_family: Option<String>,
-        #[serde(
-            serialize_with = "serialize_timestamp",
-            skip_serializing_if = "Option::is_none"
-        )]
-        pub after: Option<DateTime<Utc>>,
-        #[serde(
-            serialize_with = "serialize_timestamp",
-            skip_serializing_if = "Option::is_none"
-        )]
-        pub before: Option<DateTime<Utc>>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        pub after: Option<u64>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        pub before: Option<u64>,
         #[serde(skip_serializing_if = "Option::is_none")]
         pub limit: Option<usize>,
     }
@@ -161,10 +154,10 @@ pub mod rest {
         pub inst_id: String,
         /// Pagination of data to return records newer than the requested fundingTime
         #[serde(skip_serializing_if = "Option::is_none")]
-        pub before: Option<DateTime<Utc>>,
+        pub before: Option<u64>,
         /// Pagination of data to return records earlier than the requested fundingTime
         #[serde(skip_serializing_if = "Option::is_none")]
-        pub after: Option<DateTime<Utc>>,
+        pub after: Option<u64>,
         /// Number of results per request. The maximum is 100; The default is 100
         #[serde(skip_serializing_if = "Option::is_none")]
         pub limit: Option<usize>,
@@ -407,17 +400,11 @@ pub mod rest {
         #[serde(skip_serializing_if = "Option::is_none")]
         pub ccy: Option<String>,
         /// Pagination of data to return records newer than the requested ts
-        #[serde(
-            skip_serializing_if = "Option::is_none",
-            serialize_with = "serialize_timestamp"
-        )]
-        pub before: Option<DateTime<Utc>>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        pub before: Option<u64>,
         /// Pagination of data to return records earlier than the requested ts
-        #[serde(
-            skip_serializing_if = "Option::is_none",
-            serialize_with = "serialize_timestamp"
-        )]
-        pub after: Option<DateTime<Utc>>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        pub after: Option<u64>,
         /// Number of results per request. The maximum is 100; The default is 100
         #[serde(skip_serializing_if = "Option::is_none")]
         pub limit: Option<usize>,
@@ -474,17 +461,11 @@ pub mod rest {
         /// Index, e.g. BTC-USD
         pub inst_id: String,
         /// Pagination of data to return records earlier than the requested ts
-        #[serde(
-            skip_serializing_if = "Option::is_none",
-            serialize_with = "serialize_timestamp"
-        )]
-        pub after: Option<DateTime<Utc>>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        pub after: Option<u64>,
         /// Pagination of data to return records newer than the requested ts. The latest data will be returned when using before individually
-        #[serde(
-            skip_serializing_if = "Option::is_none",
-            serialize_with = "serialize_timestamp"
-        )]
-        pub before: Option<DateTime<Utc>>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        pub before: Option<u64>,
         /// Bar size, the default is 1m
         /// e.g. [1m/3m/5m/15m/30m/1H/2H/4H]
         /// Hong Kong time opening price k-line：[6H/12H/1D/1W/1M/3M]
@@ -518,17 +499,11 @@ pub mod rest {
         /// Index, e.g. BTC-USD
         pub inst_id: String,
         /// Pagination of data to return records earlier than the requested ts
-        #[serde(
-            skip_serializing_if = "Option::is_none",
-            serialize_with = "serialize_timestamp"
-        )]
-        pub after: Option<DateTime<Utc>>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        pub after: Option<u64>,
         /// Pagination of data to return records newer than the requested ts. The latest data will be returned when using before individually
-        #[serde(
-            skip_serializing_if = "Option::is_none",
-            serialize_with = "serialize_timestamp"
-        )]
-        pub before: Option<DateTime<Utc>>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        pub before: Option<u64>,
         /// Bar size, the default is 1m
         /// e.g. [1m/3m/5m/15m/30m/1H/2H/4H]
         /// Hong Kong time opening price k-line：[6H/12H/1D/1W/1M]
@@ -560,17 +535,11 @@ pub mod rest {
         /// Instrument ID, e.g. BTC-USD-SWAP
         pub inst_id: String,
         /// Pagination of data to return records earlier than the requested ts
-        #[serde(
-            skip_serializing_if = "Option::is_none",
-            serialize_with = "serialize_timestamp"
-        )]
-        pub after: Option<DateTime<Utc>>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        pub after: Option<u64>,
         /// Pagination of data to return records newer than the requested ts. The latest data will be returned when using before individually
-        #[serde(
-            skip_serializing_if = "Option::is_none",
-            serialize_with = "serialize_timestamp"
-        )]
-        pub before: Option<DateTime<Utc>>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        pub before: Option<u64>,
         /// Bar size, the default is 1m
         /// e.g. [1m/3m/5m/15m/30m/1H/2H/4H]
         /// Hong Kong time opening price k-line：[6H/12H/1D/1W/1M/3M]
@@ -604,17 +573,11 @@ pub mod rest {
         /// Instrument ID, e.g. BTC-USD-SWAP
         pub inst_id: String,
         /// Pagination of data to return records earlier than the requested ts
-        #[serde(
-            skip_serializing_if = "Option::is_none",
-            serialize_with = "serialize_timestamp"
-        )]
-        pub after: Option<DateTime<Utc>>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        pub after: Option<u64>,
         /// Pagination of data to return records newer than the requested ts. The latest data will be returned when using before individually
-        #[serde(
-            skip_serializing_if = "Option::is_none",
-            serialize_with = "serialize_timestamp"
-        )]
-        pub before: Option<DateTime<Utc>>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        pub before: Option<u64>,
         /// Bar size, the default is 1m
         /// e.g. [1m/3m/5m/15m/30m/1H/2H/4H]
         /// Hong Kong time opening price k-line：[6H/12H/1D/1W/1M/3M]

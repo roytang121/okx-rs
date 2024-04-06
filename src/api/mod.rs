@@ -2,7 +2,6 @@ use crate::api::credential::Credential;
 use crate::api::error::Error;
 use crate::api::options::Options;
 use crate::api::v5::{ApiResponse, Request};
-use chrono::{SecondsFormat, Utc};
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use reqwest::{Client, ClientBuilder, Method, Url};
 use std::convert::TryInto;
@@ -79,7 +78,13 @@ impl Rest {
         }
         let url = format!("{}{}", "https://www.okx.com/api/v5", path);
         log::debug!("{} {}", url, body);
-        let timestamp = Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true);
+        // let timestamp = Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true);
+        let now = std::time::SystemTime::now();
+        let timestamp = now
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("Time went backwards")
+            .as_millis()
+            .to_string();
 
         // TODO: reuse headers if possible
         let mut headers = HeaderMap::new();

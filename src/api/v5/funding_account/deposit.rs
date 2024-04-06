@@ -1,39 +1,8 @@
 use crate::api::v5::model::{DepositAddress, DepositHistory};
 use crate::api::v5::Request;
-use crate::impl_string_enum;
 use crate::serde_util::*;
 use reqwest::Method;
 use serde::Serialize;
-
-#[derive(Debug, Clone)]
-pub enum DepositStatus {
-    WaitingForConfirmation,
-    DepositCredited,
-    DepositSuccessful,
-    /// pending due to temporary deposit suspension on this crypto currency
-    Pending,
-    /// match the address blacklist
-    MatchAddressBlacklist,
-    /// account or deposit is frozen
-    AccountOrDepositFrozen,
-    /// sub-account deposit interception
-    SubAccountDepositInterception,
-    /// KYC Limit
-    KycLimit,
-    Unknown(String),
-}
-
-impl_string_enum!(DepositStatus,
-    Unknown,
-    WaitingForConfirmation => "0",
-    DepositCredited => "1",
-    DepositSuccessful => "2",
-    Pending => "8",
-    MatchAddressBlacklist => "11",
-    AccountOrDepositFrozen => "12",
-    SubAccountDepositInterception => "13",
-    KycLimit => "14",
-);
 
 /// https://www.okx.com/docs-v5/en/#funding-account-rest-api-get-deposit-history
 /// ## Get deposit history

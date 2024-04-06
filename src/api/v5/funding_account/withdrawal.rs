@@ -1,6 +1,6 @@
 use crate::api::v5::Request;
 use crate::impl_string_enum;
-use crate::serde_util::{deserialize_from_opt_str, str_opt, MaybeFloat};
+use crate::serde_util::{deserialize_from_opt_str, MaybeFloat};
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
 

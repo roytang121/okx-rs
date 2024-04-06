@@ -1,6 +1,5 @@
 //! https://www.okx.com/docs-v5/en/#rest-api-funding-get-funds-transfer-state
 
-use chrono::{DateTime, Utc};
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
 

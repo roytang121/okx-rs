@@ -49,7 +49,12 @@ impl OKXAuth {
             Ok(credential) => credential,
             Err(_) => bail!("Invalid credential"),
         };
-        let timestamp = format!("{}", chrono::Utc::now().timestamp_millis() / 1000);
+        let now = std::time::SystemTime::now();
+        let timestamp = now
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("Time went backwards")
+            .as_millis()
+            .to_string();
         let (key, signature) =
             credential.signature_ws(reqwest::Method::GET, &timestamp, "/users/self/verify");
 

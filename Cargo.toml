@@ -35,7 +35,6 @@ env_logger = { version = "0.10.0", features = [], optional = true }
 rust_decimal = { version = "1" , optional = true }
 
 # FIXME: to be removed
-chrono = { version = "0.4", features = ["serde"] }
 futures-util = "0.3.28"
 
 # FIXME: should be feature-gated
