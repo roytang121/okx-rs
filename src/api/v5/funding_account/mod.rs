@@ -91,11 +91,11 @@ impl Request for GetAccountAssetValuation {
 #[serde(rename_all = "camelCase")]
 pub struct AccountAssetValuation {
     /// Valuation of total account assets
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub total_bal: MaybeFloat,
     /// Unix timestamp format in milliseconds, e.g.<code>1597026383085</code>
-    #[serde(deserialize_with = "deserialize_timestamp")]
-    pub ts: DateTime<Utc>,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub ts: Option<u64>,
     pub details: AccountAssetValuationDetails,
 }
 
@@ -103,17 +103,17 @@ pub struct AccountAssetValuation {
 #[serde(rename_all = "camelCase")]
 pub struct AccountAssetValuationDetails {
     /// Funding account
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub funding: MaybeFloat,
     /// Trading account
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub trading: MaybeFloat,
     /// [Deprecated] Classic account
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     #[deprecated(note = "[Deprecated] Classic account")]
     pub classic: MaybeFloat,
     /// Earn account
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub earn: MaybeFloat,
 }
 

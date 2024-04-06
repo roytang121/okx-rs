@@ -664,8 +664,7 @@ pub mod rest {
         /// Latest Index Price
         pub last: f64,
         /// Data generation time, Unix timestamp format in milliseconds, e.g. 1597026383085
-        #[serde(deserialize_with = "deserialize_timestamp")]
-        pub ts: DateTime<Utc>,
+        pub ts: u64,
         /// Components
         pub components: Vec<IndexComponentItem>,
     }

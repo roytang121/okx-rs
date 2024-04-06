@@ -1,7 +1,6 @@
 use crate::api::v5::Request;
 use crate::impl_string_enum;
-use crate::serde_util::{deserialize_from_opt_str, deserialize_timestamp, MaybeFloat};
-use chrono::{DateTime, Utc};
+use crate::serde_util::{deserialize_from_opt_str, str_opt, MaybeFloat};
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
 
@@ -44,11 +43,11 @@ pub struct WithdrawalHistory {
     /// Chain name, e.g. USDT-ERC20, USDT-TRC20
     pub chain: String,
     /// Withdrawal amount
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub amt: MaybeFloat,
     /// Time the withdrawal request was submitted, Unix timestamp format in milliseconds, e.g. 1655251200000.
-    #[serde(deserialize_with = "deserialize_timestamp")]
-    pub ts: DateTime<Utc>,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub ts: Option<u64>,
     /// Withdrawal account
     /// It can be email/phone
     #[serde(default, deserialize_with = "deserialize_from_opt_str")]
@@ -217,7 +216,7 @@ impl Request for GetWithdrawalHistory {
 #[serde(rename_all = "camelCase")]
 pub struct WithdrawalResponse {
     /// Withdrawal amount
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub amt: MaybeFloat,
     /// Currency
     #[serde(default, deserialize_with = "deserialize_from_opt_str")]

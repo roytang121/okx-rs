@@ -3,10 +3,11 @@ use crate::api::v5::model::{
     StopLossTriggerPriceType, TakeProfitTriggerPriceType, TradeMode,
 };
 use crate::api::v5::{ExecType, Request, SelfTradePreventionMode};
-use crate::serde_util::{deserialize_from_opt_str, MaybeFloat, MaybeString, MaybeU64};
+use crate::serde_util::{deserialize_from_opt_str, str_opt, MaybeFloat, MaybeString, MaybeU64};
 use crate::websocket::WebsocketChannel;
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
+use serde_with::{serde_as, skip_serializing_none};
 
 /// https://www.okx.com/docs-v5/en/#rest-api-trade-cancel-order
 #[derive(Debug, Clone, Serialize)]
@@ -22,12 +23,12 @@ pub struct CancelOrder {
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct CancelOrderData {
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub cl_ord_id: MaybeString,
     pub ord_id: String,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub s_code: MaybeU64,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub s_msg: MaybeString,
 }
 
@@ -175,19 +176,19 @@ pub struct PlaceOrder {
 #[serde(rename_all = "camelCase")]
 pub struct PlaceOrderResponse {
     /// Order ID
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub ord_id: MaybeString,
     /// Client Order ID as assigned by the client
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub cl_ord_id: MaybeString,
     /// Order tag
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub tag: MaybeString,
     /// The code of the event execution result, 0 means success.
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub s_code: MaybeU64,
     /// Rejection or success message of event execution.
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub s_msg: MaybeString,
 }
 
@@ -215,74 +216,75 @@ pub struct GetOrderDetails {
 pub struct OrderDetail {
     pub inst_type: InstrumentType,
     pub inst_id: String,
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, with = "str_opt")]
     pub tgt_ccy: Option<QuantityType>,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub ccy: MaybeString,
-    pub ord_id: String,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
+    pub ord_id: MaybeString,
+    #[serde(default, with = "str_opt")]
     pub cl_ord_id: MaybeString,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub tag: MaybeString,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub px: MaybeFloat,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub sz: MaybeFloat,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub pnl: MaybeFloat,
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, with = "str_opt")]
     pub ord_type: Option<OrderType>,
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, with = "str_opt")]
     pub side: Option<Side>,
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, with = "str_opt")]
     pub pos_side: Option<PositionSide>,
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, with = "str_opt")]
     pub td_mode: Option<TradeMode>,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub acc_fill_sz: MaybeFloat,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub fill_px: MaybeFloat,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub trade_id: MaybeString,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub fill_sz: MaybeFloat,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub fill_time: MaybeU64,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub avg_px: MaybeFloat,
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, with = "str_opt")]
     pub state: Option<OrderState>,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub lever: MaybeFloat,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub tp_trigger_px: MaybeFloat,
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, with = "str_opt")]
     pub tp_trigger_px_type: Option<TakeProfitTriggerPriceType>,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub tp_ord_px: MaybeFloat,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub sl_trigger_px: MaybeFloat,
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, with = "str_opt")]
     pub sl_trigger_px_type: Option<StopLossTriggerPriceType>,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub sl_ord_px: MaybeFloat,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub fee_ccy: MaybeString,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub fee: MaybeFloat,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub rebate_ccy: MaybeString,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub source: MaybeString,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub rebate: MaybeString,
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, with = "str_opt")]
     pub category: Option<Category>,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub u_time: MaybeU64,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub c_time: MaybeU64,
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, with = "str_opt")]
     pub exec_type: Option<ExecType>,
 }
 
@@ -291,60 +293,61 @@ pub struct OrderDetail {
 pub struct OrderDetailRef<'a> {
     pub inst_type: InstrumentType,
     pub inst_id: &'a str,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub tgt_ccy: Option<QuantityType>,
     #[serde(default)]
     pub ccy: Option<&'a str>,
-    pub ord_id: String,
+    #[serde(default)]
+    pub ord_id: Option<&'a str>,
     #[serde(default)]
     pub cl_ord_id: Option<&'a str>,
     #[serde(default)]
     pub tag: Option<&'a str>,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub px: MaybeFloat,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub sz: MaybeFloat,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub pnl: MaybeFloat,
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, with = "str_opt")]
     pub ord_type: Option<OrderType>,
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, with = "str_opt")]
     pub side: Option<Side>,
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, with = "str_opt")]
     pub pos_side: Option<PositionSide>,
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, with = "str_opt")]
     pub td_mode: Option<TradeMode>,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub acc_fill_sz: MaybeFloat,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub fill_px: MaybeFloat,
     #[serde(default)]
     pub trade_id: Option<&'a str>,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub fill_sz: MaybeFloat,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub fill_time: MaybeU64,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub avg_px: MaybeFloat,
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, with = "str_opt")]
     pub state: Option<OrderState>,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub lever: MaybeFloat,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub tp_trigger_px: MaybeFloat,
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, with = "str_opt")]
     pub tp_trigger_px_type: Option<TakeProfitTriggerPriceType>,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub tp_ord_px: MaybeFloat,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub sl_trigger_px: MaybeFloat,
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, with = "str_opt")]
     pub sl_trigger_px_type: Option<StopLossTriggerPriceType>,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub sl_ord_px: MaybeFloat,
     #[serde(default)]
     pub fee_ccy: Option<&'a str>,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub fee: MaybeFloat,
     #[serde(default)]
     pub rebate_ccy: Option<&'a str>,
@@ -352,13 +355,13 @@ pub struct OrderDetailRef<'a> {
     pub source: Option<&'a str>,
     #[serde(default)]
     pub rebate: Option<&'a str>,
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, with = "str_opt")]
     pub category: Option<Category>,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub u_time: MaybeU64,
-    #[serde(default)]
+    #[serde(default, with = "str_opt")]
     pub c_time: MaybeU64,
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, with = "str_opt")]
     pub exec_type: Option<ExecType>,
 }
 
@@ -371,24 +374,26 @@ impl Request for GetOrderDetails {
 }
 
 /// https://www.okx.com/docs-v5/en/#rest-api-trade-get-order-list
+#[skip_serializing_none]
+#[serde_as]
 #[derive(Debug, Clone, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct GetOrderList {
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, with = "str_opt")]
     pub inst_type: Option<InstrumentType>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, with = "str_opt")]
     pub uly: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, with = "str_opt")]
     pub inst_id: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, with = "str_opt")]
     pub ord_type: Option<OrderType>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, with = "str_opt")]
     pub state: Option<OrderState>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, with = "str_opt")]
     pub after: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, with = "str_opt")]
     pub before: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, with = "str_opt")]
     pub limit: Option<usize>,
 }
 

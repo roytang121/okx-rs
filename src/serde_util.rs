@@ -5,16 +5,6 @@ use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
 use std::str::FromStr;
 
-pub fn deserialize_from_str<'de, D, T>(deserializer: D) -> Result<T, D::Error>
-where
-    D: Deserializer<'de>,
-    T: FromStr,
-    <T as FromStr>::Err: Display,
-{
-    let s = String::deserialize(deserializer)?;
-    FromStr::from_str(&s).map_err(de::Error::custom)
-}
-
 pub fn deserialize_from_opt_str<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
 where
     D: Deserializer<'de>,
@@ -182,7 +172,43 @@ where
     S: Serializer,
     T: std::fmt::Display,
 {
-    serializer.serialize_str(&dt.to_string())
+    // serializer.serialize_str(&dt.to_string())
+    serializer.collect_str(dt)
+}
+
+pub fn serialize_as_str_opt<S, T>(dt: &Option<T>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+    T: std::fmt::Display,
+{
+    match dt {
+        Some(dt) => serializer.collect_str(dt),
+        None => serializer.serialize_none(),
+    }
+}
+
+pub mod str_opt {
+    use super::{deserialize_from_opt_str, serialize_as_str_opt};
+    use serde::{Deserializer, Serializer};
+    use std::fmt::Display;
+    use std::str::FromStr;
+
+    pub fn deserialize<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
+    where
+        D: Deserializer<'de>,
+        T: FromStr,
+        <T as FromStr>::Err: Display,
+    {
+        deserialize_from_opt_str(deserializer)
+    }
+
+    pub fn serialize<S, T>(f: &Option<T>, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+        T: Display,
+    {
+        serialize_as_str_opt(f, serializer)
+    }
 }
 
 #[allow(dead_code)]
@@ -191,6 +217,7 @@ pub const fn none<T>() -> Option<T> {
 }
 #[cfg(test)]
 mod tests_maybe_string {
+    use super::*;
     use serde::Deserialize;
 
     #[test]
@@ -334,10 +361,10 @@ pub(crate) mod serde_float {
 
 // #[derive(Debug, Clone, Copy, PartialEq)]
 // pub struct FloatOpt(Option<f64>);
-pub type MaybeFloat = Maybe<f64>;
-pub type MaybeU64 = Maybe<u64>;
-pub type MaybeI64 = Maybe<i64>;
-pub type MaybeString = Maybe<String>;
+pub type MaybeFloat = Option<f64>;
+pub type MaybeU64 = Option<u64>;
+pub type MaybeI64 = Option<i64>;
+pub type MaybeString = Option<String>;
 
 #[derive(Clone)]
 pub struct Maybe<T>(pub Option<T>);
@@ -497,7 +524,7 @@ enum StringOrFloat<'a> {
 
 #[cfg(test)]
 mod tests_maybe_float {
-    use super::{Maybe, MaybeFloat};
+    use super::{str_opt, Maybe, MaybeFloat};
     use serde::{Deserialize, Serialize};
 
     #[test]
@@ -556,15 +583,16 @@ mod tests_maybe_float {
     fn test_ser_maybe_float() {
         #[derive(Debug, Serialize)]
         struct Foo {
+            #[serde(default, with = "str_opt")]
             bar: MaybeFloat,
         }
         let f = Foo {
-            bar: Maybe(Some(1.23)),
+            bar: *Maybe(Some(1.23)),
         };
         let s = serde_json::to_string(&f).unwrap();
         assert_eq!(s, r#"{"bar":"1.23"}"#);
 
-        let f = Foo { bar: Maybe(None) };
+        let f = Foo { bar: *Maybe(None) };
         let s = serde_json::to_string(&f).unwrap();
         assert_eq!(s, r#"{"bar":null}"#);
     }
@@ -572,7 +600,7 @@ mod tests_maybe_float {
 
 #[cfg(test)]
 mod tests_maybe_u64 {
-    use super::Maybe;
+    use super::{deserialize_from_opt_str, Maybe};
     use serde::Deserialize;
 
     #[test]
@@ -682,5 +710,56 @@ mod test_parse_maybe_enum {
         let s = r#"{ }"#;
         let m = serde_json::from_str::<Foo>(s).unwrap();
         assert!(m.bar.is_none());
+    }
+}
+
+#[cfg(test)]
+mod test_serialise_fields_as_str {
+    use super::str_opt;
+    use serde::{Deserialize, Serialize};
+    use serde_with::{serde_as, skip_serializing_none};
+
+    #[serde_as]
+    #[skip_serializing_none]
+    #[derive(Serialize, Deserialize)]
+    struct Foo {
+        #[serde(default, with = "str_opt")]
+        bar: Option<f64>,
+    }
+
+    #[test]
+    fn test_ser_fields_as_str() {
+        let f = Foo { bar: Some(1.23) };
+        let s = serde_json::to_string(&f).unwrap();
+        assert_eq!(s, r#"{"bar":"1.23"}"#);
+
+        let f = Foo { bar: None };
+        let s = serde_json::to_string(&f).unwrap();
+        assert_eq!(s, r#"{}"#);
+    }
+
+    #[test]
+    fn test_deser_fields_from_str() {
+        let s = r#"{
+            "bar": "1.23"
+        }"#;
+        let m = serde_json::from_str::<Foo>(s).unwrap();
+        assert_eq!(m.bar, Some(1.23));
+
+        let s = r#"{
+            "bar": ""
+        }"#;
+        let m = serde_json::from_str::<Foo>(s).unwrap();
+        assert_eq!(m.bar, None);
+
+        let s = r#"{
+            "bar": null
+        }"#;
+        let m = serde_json::from_str::<Foo>(s).unwrap();
+        assert_eq!(m.bar, None);
+
+        let s = r#"{ }"#;
+        let m = serde_json::from_str::<Foo>(s).unwrap();
+        assert_eq!(m.bar, None);
     }
 }

@@ -1,58 +1,34 @@
-use crate::api::v5::model::{InstrumentType, Side};
-use crate::api::v5::Request;
-use crate::serde_util::{serialize_timestamp, MaybeFloat};
-use anyhow::bail;
-use chrono::{DateTime, Utc};
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
+use serde_with::{serde_as, skip_serializing_none};
 
-#[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
-pub enum ExecType {
-    Taker,
-    Maker,
-}
+use crate::api::v5::model::{InstrumentType, Side};
+use crate::api::v5::{ExecType, PositionSide, Request};
+use crate::serde_util::str_opt;
 
-impl FromStr for ExecType {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(match s {
-            "T" => Self::Taker,
-            "M" => Self::Maker,
-            other => bail!("unknown Side {other}"),
-        })
-    }
-}
-
-/// https://www.okx.com/docs-v5/en/#rest-api-trade-get-transaction-details-last-3-months
+/// https://www.okx.com/docs-v5/en/#order-book-trading-trade-get-transaction-details-last-3-days
+#[skip_serializing_none]
+#[serde_as]
 #[derive(Debug, Serialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct GetFillHistory {
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, with = "str_opt")]
     pub inst_type: Option<InstrumentType>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub uly: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, with = "str_opt")]
     pub inst_id: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, with = "str_opt")]
     pub ord_id: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, with = "str_opt")]
     pub after: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, with = "str_opt")]
     pub before: Option<String>,
-    #[serde(
-        serialize_with = "serialize_timestamp",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub begin: Option<DateTime<Utc>>,
-    #[serde(
-        serialize_with = "serialize_timestamp",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub end: Option<DateTime<Utc>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub limit: Option<usize>,
+    #[serde(default, with = "str_opt")]
+    pub begin: Option<u64>,
+    #[serde(default, with = "str_opt")]
+    pub end: Option<u64>,
+    #[serde(default, with = "str_opt")]
+    pub limit: Option<u64>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -60,53 +36,31 @@ pub struct GetFillHistory {
 pub struct FillHistory {
     pub inst_type: InstrumentType,
     pub inst_id: String,
-    #[serde(
-        default,
-        deserialize_with = "crate::serde_util::deserialize_from_opt_str"
-    )]
+    #[serde(default, with = "str_opt")]
     pub trade_id: Option<String>,
-    #[serde(
-        default,
-        deserialize_with = "crate::serde_util::deserialize_from_opt_str"
-    )]
+    #[serde(default, with = "str_opt")]
     pub ord_id: Option<String>,
-    #[serde(
-        default,
-        deserialize_with = "crate::serde_util::deserialize_from_opt_str"
-    )]
+    #[serde(default, with = "str_opt")]
     pub cl_ord_id: Option<String>,
-    #[serde(
-        default,
-        deserialize_with = "crate::serde_util::deserialize_from_opt_str"
-    )]
+    #[serde(default, with = "str_opt")]
     pub bill_id: Option<String>,
-    pub tag: String,
-    #[serde(default)]
-    pub fill_px: MaybeFloat,
-    #[serde(default)]
-    pub fill_sz: MaybeFloat,
-    pub side: Side,
-    #[serde(
-        default,
-        deserialize_with = "crate::serde_util::deserialize_from_opt_str"
-    )]
-    pub pos_side: Option<String>,
-    #[serde(
-        default,
-        deserialize_with = "crate::serde_util::deserialize_from_opt_str"
-    )]
+    #[serde(default, with = "str_opt")]
+    pub tag: Option<String>,
+    #[serde(default, with = "str_opt")]
+    pub fill_px: Option<f64>,
+    #[serde(default, with = "str_opt")]
+    pub fill_sz: Option<f64>,
+    #[serde(default, with = "str_opt")]
+    pub side: Option<Side>,
+    #[serde(default, with = "str_opt")]
+    pub pos_side: Option<PositionSide>,
+    #[serde(default, with = "str_opt")]
     pub exec_type: Option<ExecType>,
-    #[serde(
-        default,
-        deserialize_with = "crate::serde_util::deserialize_from_opt_str"
-    )]
+    #[serde(default, with = "str_opt")]
     pub fee_ccy: Option<String>,
-    #[serde(default)]
-    pub fee: MaybeFloat,
-    #[serde(
-        default,
-        deserialize_with = "crate::serde_util::deserialize_from_opt_str"
-    )]
+    #[serde(default, with = "str_opt")]
+    pub fee: Option<f64>,
+    #[serde(default, with = "str_opt")]
     pub ts: Option<u64>,
 }
 

@@ -77,7 +77,7 @@ pub struct FundsTransfer {
     /// Transfer currency, e.g. USDT
     pub ccy: String,
     /// Amount to be transferred
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub amt: MaybeFloat,
     /// The remitting account
     #[serde(serialize_with = "crate::serde_util::serialize_as_str")]

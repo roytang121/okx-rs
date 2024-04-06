@@ -81,6 +81,7 @@ impl Rest {
         log::debug!("{} {}", url, body);
         let timestamp = Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true);
 
+        // TODO: reuse headers if possible
         let mut headers = HeaderMap::new();
         headers.insert(
             reqwest::header::CONTENT_TYPE,
@@ -144,13 +145,13 @@ impl Rest {
         // println!("{}", std::str::from_utf8(body.as_ref()).unwrap()); // DEBUG
 
         match serde_json::from_slice::<ApiResponse<R::Response>>(&body) {
-            Ok(ApiResponse { code, msg, data }) => match *code {
+            Ok(ApiResponse { code, msg, data }) => match code {
                 Some(0) => {
                     if let Some(data) = data {
                         Ok(data)
                     } else {
                         Err(Error::Api(ApiError {
-                            code: *code,
+                            code,
                             msg: Some("Success but empty response".to_owned()),
                             data: None,
                             conn_id: None,
@@ -159,7 +160,7 @@ impl Rest {
                 }
                 code => Err(Error::Api(ApiError {
                     code,
-                    msg: Some(msg),
+                    msg,
                     data,
                     conn_id: None,
                 })),

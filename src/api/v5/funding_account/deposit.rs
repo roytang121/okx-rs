@@ -2,7 +2,6 @@ use crate::api::v5::model::{DepositAddress, DepositHistory};
 use crate::api::v5::Request;
 use crate::impl_string_enum;
 use crate::serde_util::*;
-use chrono::{DateTime, Utc};
 use reqwest::Method;
 use serde::Serialize;
 
@@ -78,17 +77,11 @@ pub struct GetDepositHistory {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub state: Option<String>,
     /// Pagination of data to return records earlier than the requested ts, Unix timestamp format in milliseconds, e.g. 1654041600000
-    #[serde(
-        serialize_with = "serialize_timestamp",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub after: Option<DateTime<Utc>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub after: MaybeU64,
     /// Pagination of data to return records newer than the requested ts, Unix timestamp format in milliseconds, e.g. 1656633600000
-    #[serde(
-        serialize_with = "serialize_timestamp",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub before: Option<DateTime<Utc>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub before: MaybeU64,
     /// Number of results per request. The maximum is 100; The default is 100
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<usize>,

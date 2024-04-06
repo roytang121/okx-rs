@@ -1,4 +1,4 @@
-use crate::serde_util::MaybeU64;
+use crate::serde_util::str_opt;
 use reqwest::Method;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
@@ -45,9 +45,10 @@ pub trait Request: Serialize {
 
 #[derive(Debug, Deserialize)]
 pub struct ApiResponse<T> {
-    #[serde(default)]
-    pub code: MaybeU64,
-    pub msg: String,
+    #[serde(default, with = "str_opt")]
+    pub code: Option<u64>,
+    #[serde(default, with = "str_opt")]
+    pub msg: Option<String>,
     pub data: Option<T>,
 }
 
@@ -57,10 +58,7 @@ pub struct WsResponse<'a, A: Debug, T: Debug> {
     pub id: Option<&'a str>,
     pub op: Option<&'a str>,
     pub arg: Option<A>,
-    #[serde(
-        default,
-        deserialize_with = "crate::serde_util::deserialize_from_opt_str"
-    )]
+    #[serde(default, with = "str_opt")]
     pub code: Option<u64>,
     pub conn_id: Option<&'a str>,
     pub event: Option<&'a str>,
