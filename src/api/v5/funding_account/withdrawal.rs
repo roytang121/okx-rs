@@ -1,6 +1,6 @@
 use crate::api::v5::Request;
 use crate::impl_string_enum;
-use crate::serde_util::{deserialize_from_opt_str, MaybeFloat};
+use crate::serde_util::{deserialize_from_opt_str, str_opt, MaybeFloat};
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
 
@@ -100,7 +100,7 @@ pub struct WithdrawalRequest {
     pub ccy: Option<String>,
     /// Withdrawal amount
     /// Withdrawal fee is not included in withdrawal amount.
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none", with = "str_opt")]
     pub amt: MaybeFloat,
     /// Withdrawal method
     /// 3: internal transfer

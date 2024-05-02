@@ -1,4 +1,4 @@
-use super::options::Options;
+use super::Options;
 use base64::encode;
 use hmac::{Hmac, Mac};
 use reqwest::{Method, Url};

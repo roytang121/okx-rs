@@ -1,6 +1,5 @@
 use crate::api::credential::Credential;
 use crate::api::error::Error;
-use crate::api::options::Options;
 use crate::api::v5::{ApiResponse, Request};
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use reqwest::{Client, ClientBuilder, Method, Url};
@@ -10,12 +9,14 @@ use std::time::Duration;
 
 use self::error::ApiError;
 
+mod options;
+
 pub mod credential;
 pub mod error;
-pub mod options;
+pub use self::options::*;
 pub mod v5;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Rest {
     options: Options,
     client: Client,
@@ -76,9 +77,8 @@ impl Rest {
                 path.push_str(&params);
             }
         }
-        let url = format!("{}{}", "https://www.okx.com/api/v5", path);
+        let url = format!("{}{}", self.options().rest(), path);
         log::debug!("{} {}", url, body);
-        // let timestamp = Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true);
         let now = std::time::SystemTime::now();
         let timestamp = now
             .duration_since(std::time::UNIX_EPOCH)
@@ -171,7 +171,7 @@ impl Rest {
                 })),
             },
             Err(e) => {
-                log::debug!("{}", String::from_utf8_lossy(&body));
+                log::error!("{}", String::from_utf8_lossy(&body));
                 Err(Error::Json(e))
             }
         }

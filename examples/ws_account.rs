@@ -1,11 +1,12 @@
 use log::info;
+use okx_rs::api::{DemoTrading, OKXEnv};
 use tungstenite::Message;
 
-use okx_rs::api::options::Options;
 use okx_rs::api::v5::ws_convert::TryParseEvent;
 use okx_rs::api::v5::{
     AccountChannel, BalanceAndPositionChannel, InstrumentType, PositionsChannel,
 };
+use okx_rs::api::Options;
 use okx_rs::websocket::OKXAuth;
 use okx_rs::websocket::WebsocketChannel;
 
@@ -17,13 +18,13 @@ fn main() {
     let secret = std::env::var("OKX_API_SECRET").unwrap();
     let passphrase = std::env::var("OKX_API_PASSPHRASE").unwrap();
     let options = Options {
+        env: DemoTrading,
         key: Some(key),
         secret: Some(secret),
         passphrase: Some(passphrase),
     };
 
-    let (mut client, response) =
-        tungstenite::connect("wss://ws.okx.com:8443/ws/v5/public").unwrap();
+    let (mut client, response) = tungstenite::connect(DemoTrading.private_websocket()).unwrap();
     println!("Connected to the server");
     println!("Response HTTP code: {}", response.status());
     println!("Response contains the following headers:");

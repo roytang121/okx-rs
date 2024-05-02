@@ -1,17 +1,8 @@
-use crate::api::options::Options;
+use crate::api::Options;
+use crate::api::Production;
 use crate::api::Rest;
 use std::future::Future;
-
-#[allow(clippy::manual_async_fn)]
-pub fn with_public_client<C, Fut>(ctx: C) -> impl Future<Output = ()>
-where
-    C: FnOnce(Rest) -> Fut,
-    Fut: Future<Output = ()>,
-{
-    async move {
-        ctx(Rest::new(Options::default())).await;
-    }
-}
+use std::sync::Arc;
 
 #[allow(clippy::manual_async_fn)]
 pub fn with_env_private_client<C, Fut>(ctx: C) -> impl Future<Output = ()>
@@ -28,6 +19,7 @@ where
         let api_passphrase =
             std::env::var("OKX_API_PASSPHRASE").expect("OKX_API_PASSPHRASE not set");
         ctx(Rest::new(Options {
+            env: Arc::new(Production),
             key: Some(api_key),
             secret: Some(api_secret),
             passphrase: Some(api_passphrase),

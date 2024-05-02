@@ -4,7 +4,7 @@ use anyhow::bail;
 use serde::Deserialize;
 
 use crate::api::credential::Credential;
-use crate::api::options::Options;
+use crate::api::Options;
 
 pub mod conn;
 
