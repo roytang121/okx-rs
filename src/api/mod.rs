@@ -26,10 +26,7 @@ pub struct Rest {
 
 impl Rest {
     pub fn new(options: Options) -> Self {
-        let mut headers = HeaderMap::new();
-
         let client = ClientBuilder::new()
-            .default_headers(headers)
             .tcp_nodelay(true)
             .tcp_keepalive(Duration::from_secs(30))
             .timeout(Duration::from_secs(30))

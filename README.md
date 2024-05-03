@@ -39,9 +39,9 @@ async fn main() {
 
 - [x] REST / Get balance
 - [x] REST / Get positions
-- [ ] REST / Get positions history
+- [x] REST / Get positions history
 - [ ] REST / Get account and position risk
-- [ ] REST / Get bills details (last 7 days)
+- [x] REST / Get bills details (last 7 days)
 - [ ] REST / Get bills details (last 3 months)
 - [ ] REST / Get account configuration
 - [ ] REST / Set position mode
@@ -98,16 +98,16 @@ async fn main() {
 
 - [ ] POST / Place order
 - [ ] POST / Place multiple orders
-- [ ] POST / Cancel order
-- [ ] POST / Cancel multiple orders
+- [x] POST / Cancel order
+- [x] POST / Cancel multiple orders
 - [ ] POST / Amend order
 - [ ] POST / Amend multiple orders
 - [ ] POST / Close positions
-- [ ] GET / Order details
-- [ ] GET / Order List
+- [x] GET / Order details
+- [x] GET / Order List
 - [ ] GET / Order history (last 7 days)
 - [ ] GET / Order history (last 3 months)
-- [ ] GET / Transaction details (last 3 days）
+- [x] GET / Transaction details (last 3 days）
 - [ ] GET / Transaction details (last 3 months)
 - [ ] GET / Easy convert currency list
 - [ ] POST / Place easy convert
@@ -117,7 +117,7 @@ async fn main() {
 - [ ] GET / One-click repay history
 - [ ] POST / Mass cancel order
 - [ ] POST / Cancel All After
-- [ ] WS / Order channel
+- [x] WS / Order channel
 - [ ] WS / Place order
 - [ ] WS / Place multiple orders
 - [ ] WS / Cancel order

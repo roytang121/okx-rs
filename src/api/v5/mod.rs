@@ -11,6 +11,7 @@ pub mod funding_account;
 pub mod model;
 pub mod orderbook_trading;
 pub mod public_data;
+#[cfg(feature = "example")]
 pub mod testkit;
 pub mod trading_account;
 

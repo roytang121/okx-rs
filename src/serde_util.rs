@@ -1,25 +1,6 @@
-use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
-use std::fmt::{Display, Formatter};
-use std::ops::{Deref, DerefMut};
+use serde::{de, Deserialize, Deserializer, Serializer};
+use std::fmt::Display;
 use std::str::FromStr;
-
-trait MaybeFromStr
-where
-    Self: Sized,
-{
-    type Err;
-    fn maybe_from_str(s: &str) -> Result<Self, Self::Err>;
-}
-
-impl<T> MaybeFromStr for T
-where
-    T: FromStr,
-{
-    type Err = <T as FromStr>::Err;
-    fn maybe_from_str(s: &str) -> Result<Self, Self::Err> {
-        s.parse()
-    }
-}
 
 pub fn deserialize_from_opt_str<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
 where
