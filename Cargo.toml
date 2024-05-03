@@ -30,7 +30,6 @@ tokio = { version = "1.0.0", features = ["rt", "rt-multi-thread", "macros"], opt
 simd-json = { version = "0.13.4", features = ["runtime-detection", "known-key"], optional = true }
 tungstenite = { version = "0.20.1", features = ["native-tls"], optional = true }
 log = { version = "0.4.20", optional = true }
-dotenv = { version = "0.15.0", optional = true }
 env_logger = { version = "0.10.0", features = [], optional = true }
 rust_decimal = { version = "1" , optional = true }
 
@@ -38,12 +37,16 @@ rust_decimal = { version = "1" , optional = true }
 futures-util = "0.3.28"
 
 # FIXME: should be feature-gated
-reqwest = { version = "0.11.22", features = ["json"] }
+reqwest = { version = "0.11.22", features = ["json", "blocking"] }
+chrono = "0.4.38"
+
+[dev-dependencies]
+dotenv = { version = "0.15.0" }
 
 [features]
 default = ["dep:log"]
 vip = []
 simd = ["dep:simd-json"]
 websocket = ["dep:tungstenite"]
-example = ["dep:dotenv", "dep:env_logger", "dep:tokio", "websocket"]
+example = ["dep:env_logger", "dep:tokio", "websocket"]
 orderbook = ["dep:rust_decimal"]

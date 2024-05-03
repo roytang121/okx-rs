@@ -543,10 +543,6 @@ pub struct TradingBalance {
     /// Applicable to Single-currency margin and Multi-currency margin and Portfolio margin
     #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub iso_upl: MaybeFloat,
-    /// Spot in use amount
-    /// Applicable to Portfolio margin
-    #[serde(default)]
-    pub spot_in_use_amt: MaybeFloat,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -690,13 +686,13 @@ pub struct PositionDetail {
     pub spot_in_use_amt: MaybeFloat,
     /// Spot in use unit, e.g. BTC
     /// Applicable to Portfolio margin
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, with = "str_opt")]
     pub spot_in_use_ccy: Option<String>,
     /// External business id, e.g. experience coupon id
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, with = "str_opt")]
     pub biz_ref_id: Option<String>,
     /// External business type
-    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, with = "str_opt")]
     pub biz_ref_type: Option<String>,
     /// Realized profit and loss
     #[serde(default, with = "str_opt")]

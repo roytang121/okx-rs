@@ -1,8 +1,25 @@
-use serde::de::Error;
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::{Display, Formatter};
 use std::ops::{Deref, DerefMut};
 use std::str::FromStr;
+
+trait MaybeFromStr
+where
+    Self: Sized,
+{
+    type Err;
+    fn maybe_from_str(s: &str) -> Result<Self, Self::Err>;
+}
+
+impl<T> MaybeFromStr for T
+where
+    T: FromStr,
+{
+    type Err = <T as FromStr>::Err;
+    fn maybe_from_str(s: &str) -> Result<Self, Self::Err> {
+        s.parse()
+    }
+}
 
 pub fn deserialize_from_opt_str<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
 where
@@ -280,154 +297,9 @@ pub type MaybeU64 = Option<u64>;
 pub type MaybeI64 = Option<i64>;
 pub type MaybeString = Option<String>;
 
-#[derive(Clone)]
-pub struct Maybe<T>(pub Option<T>);
-
-impl<T: std::fmt::Debug> std::fmt::Debug for Maybe<T> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match &self.0 {
-            Some(v) => write!(f, "Maybe({:?})", v),
-            None => write!(f, "None"),
-        }
-    }
-}
-
-impl<T: std::fmt::Display> std::fmt::Display for Maybe<T> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match &self.0 {
-            Some(v) => write!(f, "{}", v),
-            None => write!(f, ""),
-        }
-    }
-}
-
-impl<T> Default for Maybe<T> {
-    fn default() -> Self {
-        Maybe(None)
-    }
-}
-
-impl<T> Deref for Maybe<T> {
-    type Target = Option<T>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl<T> DerefMut for Maybe<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-impl<T> AsRef<Option<T>> for Maybe<T> {
-    fn as_ref(&self) -> &Option<T> {
-        &self.0
-    }
-}
-
-impl<T> From<Maybe<T>> for Option<T> {
-    fn from(val: Maybe<T>) -> Self {
-        val.0
-    }
-}
-
-impl<T> Maybe<T> {
-    pub fn into_option(self) -> Option<T> {
-        self.into()
-    }
-}
-
-impl<T> Serialize for Maybe<T>
-where
-    T: std::fmt::Display,
-{
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        match &self.0 {
-            Some(v) => serializer.serialize_str(&v.to_string()),
-            None => serializer.serialize_none(),
-        }
-    }
-}
-
-impl<'de> Deserialize<'de> for Maybe<f64> {
-    fn deserialize<D>(deserializer: D) -> Result<Maybe<f64>, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        match StringOrFloat::deserialize(deserializer)? {
-            StringOrFloat::Str(s) => match s {
-                "" => Ok(Maybe(None)),
-                s => Ok(Maybe(Some(s.parse().map_err(D::Error::custom)?))),
-            },
-            StringOrFloat::Bool(_) => Ok(Maybe(None)),
-            StringOrFloat::Float(v) => Ok(Maybe(Some(v))),
-            StringOrFloat::Integer(v) => Ok(Maybe(Some(v as f64))),
-            StringOrFloat::Null(()) => Ok(Maybe(None)),
-        }
-    }
-}
-
-impl<'de> Deserialize<'de> for Maybe<u64> {
-    fn deserialize<D>(deserializer: D) -> Result<Maybe<u64>, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        match StringOrFloat::deserialize(deserializer)? {
-            StringOrFloat::Str(s) => match s {
-                "" => Ok(Maybe(None)),
-                s => Ok(Maybe(Some(s.parse().map_err(D::Error::custom)?))),
-            },
-            StringOrFloat::Bool(_) => Ok(Maybe(None)),
-            StringOrFloat::Float(v) => Ok(Maybe(Some(v as u64))),
-            StringOrFloat::Integer(v) => Ok(Maybe(Some(v as u64))),
-            StringOrFloat::Null(()) => Ok(Maybe(None)),
-        }
-    }
-}
-
-impl<'de> Deserialize<'de> for Maybe<i64> {
-    fn deserialize<D>(deserializer: D) -> Result<Maybe<i64>, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        match StringOrFloat::deserialize(deserializer)? {
-            StringOrFloat::Str(s) => match s {
-                "" => Ok(Maybe(None)),
-                s => Ok(Maybe(Some(s.parse().map_err(D::Error::custom)?))),
-            },
-            StringOrFloat::Bool(_) => Ok(Maybe(None)),
-            StringOrFloat::Float(v) => Ok(Maybe(Some(v as i64))),
-            StringOrFloat::Integer(v) => Ok(Maybe(Some(v))),
-            StringOrFloat::Null(()) => Ok(Maybe(None)),
-        }
-    }
-}
-
-impl<'de> Deserialize<'de> for Maybe<String> {
-    fn deserialize<D>(deserializer: D) -> Result<Maybe<String>, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        match StringOrFloat::deserialize(deserializer)? {
-            StringOrFloat::Str(s) => match s {
-                "" => Ok(Maybe(None)),
-                s => Ok(Maybe(Some(s.to_string()))),
-            },
-            StringOrFloat::Bool(v) => Ok(Maybe(Some(v.to_string()))),
-            StringOrFloat::Float(v) => Ok(Maybe(Some(v.to_string()))),
-            StringOrFloat::Integer(v) => Ok(Maybe(Some(v.to_string()))),
-            StringOrFloat::Null(()) => Ok(Maybe(None)),
-        }
-    }
-}
-
 #[derive(Deserialize)]
 #[serde(untagged)]
+#[allow(dead_code)]
 enum StringOrFloat<'a> {
     Str(&'a str),
     Float(f64),
@@ -438,59 +310,62 @@ enum StringOrFloat<'a> {
 
 #[cfg(test)]
 mod tests_maybe_float {
-    use super::{str_opt, Maybe, MaybeFloat};
+    use super::{str_opt, MaybeFloat};
     use serde::{Deserialize, Serialize};
 
     #[test]
     fn can_deser_maybe_float() {
         #[derive(Debug, Deserialize)]
         struct Foo {
-            bar: Maybe<f64>,
+            #[serde(default, with = "str_opt")]
+            bar: MaybeFloat,
         }
 
         let s = r#"{
             "bar": "1.23"
         }"#;
         let m = serde_json::from_str::<Foo>(s).unwrap();
-        assert_eq!(*m.bar, Some(1.23));
+        assert_eq!(m.bar, Some(1.23));
     }
 
     #[test]
     fn can_deser_maybe_float_empty() {
         #[derive(Debug, Deserialize)]
         struct Foo {
-            bar: Maybe<f64>,
+            #[serde(default, with = "str_opt")]
+            bar: MaybeFloat,
         }
         let s = r#"{
             "bar": ""
         }"#;
         let m = serde_json::from_str::<Foo>(s).unwrap();
-        assert_eq!(*m.bar, None);
+        assert_eq!(m.bar, None);
     }
 
     #[test]
     fn can_deser_maybe_float_null() {
         #[derive(Debug, Deserialize)]
         struct Foo {
-            bar: Maybe<f64>,
+            #[serde(default, with = "str_opt")]
+            bar: MaybeFloat,
         }
         let s = r#"{
             "bar": null
         }"#;
         let m = serde_json::from_str::<Foo>(s).unwrap();
-        assert_eq!(*m.bar, None);
+        assert_eq!(m.bar, None);
     }
 
     #[test]
     fn can_deser_maybe_float_missing_key() {
         #[derive(Debug, Deserialize, Default)]
         struct Foo {
-            #[serde(default)]
-            bar: Maybe<f64>,
+            #[serde(default, with = "str_opt")]
+            bar: MaybeFloat,
         }
         let s = r#"{ }"#;
         let m = serde_json::from_str::<Foo>(s).unwrap();
-        assert_eq!(*m.bar, None);
+        assert_eq!(m.bar, None);
     }
 
     #[test]
@@ -500,13 +375,11 @@ mod tests_maybe_float {
             #[serde(default, with = "str_opt")]
             bar: MaybeFloat,
         }
-        let f = Foo {
-            bar: *Maybe(Some(1.23)),
-        };
+        let f = Foo { bar: Some(1.23) };
         let s = serde_json::to_string(&f).unwrap();
         assert_eq!(s, r#"{"bar":"1.23"}"#);
 
-        let f = Foo { bar: *Maybe(None) };
+        let f = Foo { bar: None };
         let s = serde_json::to_string(&f).unwrap();
         assert_eq!(s, r#"{"bar":null}"#);
     }
@@ -514,59 +387,64 @@ mod tests_maybe_float {
 
 #[cfg(test)]
 mod tests_maybe_u64 {
-    use super::Maybe;
     use serde::Deserialize;
+
+    use super::str_opt;
+    use crate::serde_util::MaybeU64;
 
     #[test]
     fn can_deser_maybe_u64() {
         #[derive(Debug, Deserialize)]
         struct Foo {
-            bar: Maybe<u64>,
+            #[serde(default, with = "str_opt")]
+            bar: MaybeU64,
         }
 
         let s = r#"{
             "bar": "123"
         }"#;
         let m = serde_json::from_str::<Foo>(s).unwrap();
-        assert_eq!(*m.bar, Some(123));
+        assert_eq!(m.bar, Some(123));
     }
 
     #[test]
     fn can_deser_maybe_u64_empty() {
         #[derive(Debug, Deserialize)]
         struct Foo {
-            bar: Maybe<u64>,
+            #[serde(default, with = "str_opt")]
+            bar: MaybeU64,
         }
         let s = r#"{
             "bar": ""
         }"#;
         let m = serde_json::from_str::<Foo>(s).unwrap();
-        assert_eq!(*m.bar, None);
+        assert_eq!(m.bar, None);
     }
 
     #[test]
     fn can_deser_maybe_u64_null() {
         #[derive(Debug, Deserialize)]
         struct Foo {
-            bar: Maybe<u64>,
+            #[serde(default, with = "str_opt")]
+            bar: MaybeU64,
         }
         let s = r#"{
             "bar": null
         }"#;
         let m = serde_json::from_str::<Foo>(s).unwrap();
-        assert_eq!(*m.bar, None);
+        assert_eq!(m.bar, None);
     }
 
     #[test]
     fn can_deser_maybe_u64_missing_key() {
         #[derive(Debug, Deserialize, Default)]
         struct Foo {
-            #[serde(default)]
-            bar: Maybe<u64>,
+            #[serde(default, with = "str_opt")]
+            bar: MaybeU64,
         }
         let s = r#"{ }"#;
         let m = serde_json::from_str::<Foo>(s).unwrap();
-        assert_eq!(*m.bar, None);
+        assert_eq!(m.bar, None);
     }
 }
 

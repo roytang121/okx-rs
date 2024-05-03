@@ -47,13 +47,13 @@ impl OKXAuth {
     pub fn ws_auth(options: Options) -> anyhow::Result<String> {
         let credential: Credential = match (&options).try_into() {
             Ok(credential) => credential,
-            Err(_) => bail!("Invalid credential"),
+            Err(err) => bail!("Invalid credential: {err}"),
         };
         let now = std::time::SystemTime::now();
         let timestamp = now
             .duration_since(std::time::UNIX_EPOCH)
             .expect("Time went backwards")
-            .as_millis()
+            .as_secs()
             .to_string();
         let (key, signature) =
             credential.signature_ws(reqwest::Method::GET, &timestamp, "/users/self/verify");

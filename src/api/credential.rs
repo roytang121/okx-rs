@@ -1,4 +1,5 @@
 use super::Options;
+use anyhow::{bail, ensure};
 use base64::encode;
 use hmac::{Hmac, Mac};
 use reqwest::{Method, Url};
@@ -79,16 +80,18 @@ impl Credential {
 }
 
 impl TryFrom<&Options> for Credential {
-    type Error = &'static str;
+    type Error = anyhow::Error;
 
     fn try_from(options: &Options) -> Result<Self, Self::Error> {
+        ensure!(options.key.is_some(), "key is not set");
+        ensure!(options.secret.is_some(), "secret is not set");
         if let (Some(key), Some(secret)) = (&options.key, &options.secret) {
             Ok(Self {
                 key: key.to_owned(),
                 secret: secret.to_owned(),
             })
         } else {
-            Err("not enough credentials from Options")
+            bail!("not enough credentials from Options")
         }
     }
 }

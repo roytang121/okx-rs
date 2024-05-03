@@ -17,24 +17,15 @@ fn main() {
     let key = std::env::var("OKX_API_KEY").unwrap();
     let secret = std::env::var("OKX_API_SECRET").unwrap();
     let passphrase = std::env::var("OKX_API_PASSPHRASE").unwrap();
-    let options = Options {
-        env: DemoTrading,
-        key: Some(key),
-        secret: Some(secret),
-        passphrase: Some(passphrase),
-    };
+    let options = Options::new_with(DemoTrading, key, secret, passphrase);
 
     let (mut client, response) = tungstenite::connect(DemoTrading.private_websocket()).unwrap();
-    println!("Connected to the server");
-    println!("Response HTTP code: {}", response.status());
-    println!("Response contains the following headers:");
-    println!("{:?}", response.headers());
 
     let auth_msg = OKXAuth::ws_auth(options).unwrap();
     client.send(auth_msg.into()).unwrap();
 
     let auth_resp = client.read().unwrap();
-    info!("{:?}", auth_resp);
+    info!("auth_resp: {:?}", auth_resp);
 
     client
         .send(AccountChannel.subscribe_message().into())

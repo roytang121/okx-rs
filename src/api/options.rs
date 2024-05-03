@@ -40,6 +40,10 @@ impl OKXEnv for DemoTrading {
     fn business_websocket(&self) -> &str {
         "wss://wspap.okx.com:8443/ws/v5/business?brokerId=9999"
     }
+
+    fn headers(&self) -> Option<&[(&str, &str)]> {
+        Some(&[("x-simulated-trading", "1")])
+    }
 }
 
 pub trait OKXEnv {
@@ -47,6 +51,9 @@ pub trait OKXEnv {
     fn public_websocket(&self) -> &str;
     fn private_websocket(&self) -> &str;
     fn business_websocket(&self) -> &str;
+    fn headers(&self) -> Option<&[(&str, &str)]> {
+        None
+    }
 }
 
 #[derive(Clone)]
@@ -64,6 +71,20 @@ impl Options {
             key: None,
             secret: None,
             passphrase: None,
+        }
+    }
+
+    pub fn new_with(
+        env: impl OKXEnv + 'static,
+        key: impl AsRef<str>,
+        secret: impl AsRef<str>,
+        passphrase: impl AsRef<str>,
+    ) -> Self {
+        Self {
+            env: Arc::new(env),
+            key: Some(key.as_ref().to_string()),
+            secret: Some(secret.as_ref().to_string()),
+            passphrase: Some(passphrase.as_ref().to_string()),
         }
     }
 }
