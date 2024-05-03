@@ -1,73 +1,55 @@
 use log::info;
-use okx_rs::api::options::Options;
+use okx_rs::api::{DemoTrading, OKXEnv};
+use tungstenite::Message;
+
 use okx_rs::api::v5::ws_convert::TryParseEvent;
 use okx_rs::api::v5::{
     AccountChannel, BalanceAndPositionChannel, InstrumentType, PositionsChannel,
 };
-use okx_rs::websocket::async_client::OKXWebsocketClient;
-use okx_rs::websocket::{AsyncWebsocketClient, AsyncWebsocketSession, Message, Subscriptions};
-use url::Url;
+use okx_rs::api::Options;
+use okx_rs::websocket::OKXAuth;
+use okx_rs::websocket::WebsocketChannel;
 
-#[tokio::main]
-async fn main() {
+fn main() {
     dotenv::dotenv().ok();
     env_logger::init();
-    let mut client =
-        OKXWebsocketClient::new(Url::parse("wss://ws.okx.com:8443/ws/v5/private").unwrap())
-            .await
-            .unwrap();
 
     let key = std::env::var("OKX_API_KEY").unwrap();
     let secret = std::env::var("OKX_API_SECRET").unwrap();
     let passphrase = std::env::var("OKX_API_PASSPHRASE").unwrap();
-    let options = Options {
-        key: Some(key),
-        secret: Some(secret),
-        passphrase: Some(passphrase),
-    };
+    let options = Options::new_with(DemoTrading, key, secret, passphrase);
 
-    let session = Subscriptions::default();
-    session.auth(&mut client, options).await.unwrap();
-    session
-        .subscribe_channel(&mut client, AccountChannel)
-        .await
+    let (mut client, response) = tungstenite::connect(DemoTrading.private_websocket()).unwrap();
+
+    let auth_msg = OKXAuth::ws_auth(options).unwrap();
+    client.send(auth_msg.into()).unwrap();
+
+    let auth_resp = client.read().unwrap();
+    info!("auth_resp: {:?}", auth_resp);
+
+    client
+        .send(AccountChannel.subscribe_message().into())
         .unwrap();
-    session
-        .subscribe_channel(
-            &mut client,
+    client
+        .send(
             PositionsChannel {
                 inst_type: InstrumentType::Any,
                 inst_family: None,
                 inst_id: None,
-            },
+            }
+            .subscribe_message()
+            .into(),
         )
-        .await
         .unwrap();
-    session
-        .subscribe_channel(&mut client, BalanceAndPositionChannel)
-        .await
+    client
+        .send(BalanceAndPositionChannel.subscribe_message().into())
         .unwrap();
-
-    let mut ping = tokio::time::interval(tokio::time::Duration::from_secs(10));
 
     loop {
-        let res = tokio::select! {
-            res = client.next() => {
-                log::debug!("{:?}", res);
-                res
-            }
-            _ = ping.tick() => {
-                client.send("ping").await.unwrap();
-                continue
-            }
-            else => continue
-        };
-
-        let msg = match res {
-            Ok(Some(Message::Data(msg))) => msg,
+        let msg = match client.read() {
+            Ok(Message::Text(msg)) => msg,
             Err(err) => {
-                log::error!("{:?}", err);
-                continue;
+                panic!("{:?}", err);
             }
             _ => continue,
         };

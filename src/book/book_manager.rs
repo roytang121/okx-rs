@@ -20,18 +20,19 @@ pub enum BookUpdateType {
 impl BookManager {
     #[allow(clippy::all)]
     pub fn handle_book_update(&mut self, update: BookUpdate, update_type: BookUpdateType) -> bool {
-        if update.seq_id < update.prev_seq_id.expect("no prev seq") {
+        let seq_id = update.seq_id.unwrap();
+        if seq_id < update.prev_seq_id.expect("no prev seq") {
             // sequence reset due to maintenance. just panics for now
             // TODO: handle seq reset
             todo!("unhandled seq reset");
         }
         let should_update = if let Some(last_seq) = self.last_seq {
-            if update.seq_id == last_seq {
+            if seq_id == last_seq {
                 // TODO: verify all updates matches current book
                 // TODO: verify exch timestamp
                 // TODO: verify checksum
                 false
-            } else if update.seq_id > last_seq {
+            } else if seq_id > last_seq {
                 // TODO: commit update
                 true
             } else {
@@ -51,7 +52,7 @@ impl BookManager {
                 asks,
                 ..
             } = update;
-            self.last_seq = Some(seq_id);
+            self.last_seq = *seq_id;
             self.last_exch_ts = Some(ts.expect("no ts"));
 
             // imply depth levels if bbo
@@ -99,7 +100,7 @@ impl BookManager {
                 }
             }
 
-            self.last_seq = Some(seq_id);
+            self.last_seq = *seq_id;
             self.last_exch_ts = *ts;
             // println!("{:?}", self.book);
             debug_assert!(!self.book.crossed(), "crossed book");

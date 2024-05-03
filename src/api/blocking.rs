@@ -1,23 +1,22 @@
-use crate::api::credential::Credential;
-use crate::api::error::Error;
-use crate::api::v5::{ApiResponse, Request};
+use std::{str::FromStr, time::Duration};
+
 use chrono::Utc;
-use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
-use reqwest::{Client, ClientBuilder, Method, Url};
-use std::convert::TryInto;
-use std::str::FromStr;
-use std::time::Duration;
+use reqwest::{
+    blocking::{Client, ClientBuilder},
+    header::{HeaderMap, HeaderName, HeaderValue},
+    Method,
+};
+use url::Url;
 
-use self::error::ApiError;
+use crate::api::{
+    credential::Credential,
+    error::{ApiError, Error},
+    v5::ApiResponse,
+};
 
-mod options;
+use super::{v5::Request, Options};
 
-pub mod credential;
-pub mod error;
-pub use self::options::*;
-pub mod blocking;
-pub mod v5;
-
+// FIXME: mostly a copy paste from async variant
 #[derive(Clone)]
 pub struct Rest {
     options: Options,
@@ -42,15 +41,15 @@ impl Rest {
     }
 
     #[inline]
-    pub async fn request<R>(&self, req: R) -> crate::api::error::Result<R::Response>
+    pub fn request<R>(&self, req: R) -> crate::api::error::Result<R::Response>
     where
         R: Request,
     {
         let mut callback = || {};
-        self.request_with(req, &mut callback).await
+        self.request_with(req, &mut callback)
     }
 
-    pub async fn request_with<R>(
+    pub fn request_with<R>(
         &self,
         req: R,
         on_send: &mut (dyn FnMut() + Sync + Send),
@@ -128,7 +127,6 @@ impl Rest {
             .headers(headers)
             .body(body)
             .send()
-            .await
         {
             Ok(sent) => sent,
             Err(err) => {
@@ -142,7 +140,7 @@ impl Rest {
         }
         on_send();
 
-        let body = sent.bytes().await?;
+        let body = sent.bytes()?;
 
         // println!("{}", std::str::from_utf8(body.as_ref()).unwrap()); // DEBUG
 

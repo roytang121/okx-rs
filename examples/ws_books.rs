@@ -1,66 +1,39 @@
-use okx_rs::api::v5::WsResponse;
-use okx_rs::websocket::async_client::OKXWebsocketClient;
-use okx_rs::websocket::conn::{BboTbt, Books};
-use okx_rs::websocket::{AsyncWebsocketClient, AsyncWebsocketSession, Message, Subscriptions};
-use url::Url;
+use okx_rs::api::v5::ws_convert::TryParseEvent;
+use okx_rs::api::OKXEnv;
+use okx_rs::api::Production;
+use okx_rs::websocket::conn::Books5;
+use okx_rs::websocket::WebsocketChannel;
 
-#[tokio::main]
-async fn main() {
-    let mut client =
-        OKXWebsocketClient::new(Url::parse("wss://ws.okx.com:8443/ws/v5/public").unwrap())
-            .await
-            .unwrap();
-    let session = Subscriptions::default();
-    session
-        .subscribe_channel(
-            &mut client,
-            BboTbt {
-                inst_id: "BTC-USDT-SWAP".into(),
-            },
-        )
-        .await
-        .unwrap();
-    session
-        .subscribe_channel(
-            &mut client,
-            Books {
-                inst_id: "BTC-USDT-SWAP".into(),
-            },
-        )
-        .await
-        .unwrap();
-    let mut ping = tokio::time::interval(tokio::time::Duration::from_secs(5));
+fn main() {
+    let (mut client, response) = tungstenite::connect(Production.public_websocket()).unwrap();
+    println!("Connected to the server");
+    println!("Response HTTP code: {}", response.status());
+    println!("Response contains the following headers:");
+    println!("{:?}", response.headers());
+
+    let symbols = vec!["BTC-USDT-SWAP", "BTC-USDT", "ETH-USDT-SWAP", "ETH-USDT"];
+
+    for symbol in symbols {
+        let channel = Books5 {
+            inst_id: symbol.into(),
+        };
+        client.send(channel.subscribe_message().into()).unwrap();
+    }
 
     loop {
-        let data = tokio::select! {
-            res = client.next() => res,
-            _ = ping.tick() => {
-                client.send("ping").await.unwrap();
-                continue
-            }
-            else => continue
-        };
-        // println!("{:?}", data);
-        let mut msg = match data {
-            Ok(Some(Message::Data(msg))) => msg,
-            Err(err) => {
-                // abnormal connection handling
-                eprintln!("{:?}", err);
-                continue;
-            }
-            _ => continue,
-        };
+        let msg = client.read().unwrap();
+        let data = msg.into_text().unwrap();
 
-        match Books::try_parse_books(&mut msg) {
-            None => {}
-            Some(WsResponse {
-                arg,
-                action,
-                event,
-                data,
-                ..
-            }) => {
-                println!("{:?} {:?} {:?} {:?}", arg, action, event, data);
+        match Books5::try_parse(&data) {
+            Ok(Some(resp)) => match resp.data {
+                Some([book_update, ..]) => {
+                    println!("book_update: {:?}", book_update);
+                }
+                None => println!("other response: {:?}", resp),
+            },
+            Ok(None) => continue,
+            Err(err) => {
+                println!("Error parsing response: {:?}", err);
             }
         }
     }

@@ -1,16 +1,12 @@
 //! https://www.okx.com/docs-v5/en/#rest-api-funding-get-funds-transfer-state
 
-use crate::api::v5::model::{InstrumentType, MarginMode};
-use crate::api::v5::{ExecType, Request};
-use crate::impl_string_enum;
-use crate::serde_util::{
-    deserialize_from_opt_str, deserialize_timestamp, deserialize_timestamp_opt, MaybeString,
-};
-use chrono::{DateTime, Utc};
 use reqwest::Method;
-use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
+
+use crate::api::v5::model::{InstrumentType, MarginMode};
+use crate::api::v5::{ExecType, Request, SubAccountBillType};
+use crate::impl_string_enum;
+use crate::serde_util::{deserialize_from_opt_str, str_opt, MaybeFloat, MaybeString, MaybeU64};
 
 #[derive(Debug, Clone)]
 pub enum AssetBillType {
@@ -354,10 +350,10 @@ impl_string_enum!(AssetBillType,
 #[serde(rename_all = "camelCase")]
 pub struct AssetBill {
     /// Bill ID
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub bill_id: MaybeString,
     /// Account balance currency
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub ccy: MaybeString,
     /// Client-supplied ID for transfer or withdrawal
     #[serde(deserialize_with = "deserialize_from_opt_str")]
@@ -376,27 +372,6 @@ pub struct AssetBill {
     pub ts: Option<u64>,
 }
 
-// gen test for get_asset_bills
-#[cfg(test)]
-mod tests_get_asset_bills {
-    use crate::api::v5::funding_account::GetAssetBills;
-    use crate::api::v5::testkit::with_env_private_client;
-
-    #[tokio::test]
-    #[ignore]
-    async fn test_deser() {
-        with_env_private_client(|client| async move {
-            let resp = client
-                .request(GetAssetBills::default())
-                .await
-                .expect("get asset bills");
-            println!("{:?}", resp);
-            assert!(!resp.is_empty());
-        })
-        .await;
-    }
-}
-
 /// https://www.okx.com/docs-v5/en/#rest-api-subaccount-history-of-sub-account-transfer
 #[derive(Debug, Clone, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
@@ -405,32 +380,18 @@ pub struct GetSubAccountBills {}
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SubAccountBill {
-    pub bill_id: String,
-    pub ccy: String,
-    pub amt: Decimal,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub r#type: SubAccountBillType,
-    pub sub_acct: String,
-    #[serde(default, deserialize_with = "deserialize_timestamp_opt")]
-    pub ts: Option<DateTime<Utc>>,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-pub enum SubAccountBillType {
-    MasterToSubAccount,
-    SubAccountToMaster,
-}
-
-impl FromStr for SubAccountBillType {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(match s {
-            "0" => Self::MasterToSubAccount,
-            "1" => Self::SubAccountToMaster,
-            unknown => anyhow::bail!("unknown SubAccountBillType {}", unknown),
-        })
-    }
+    #[serde(default, with = "str_opt")]
+    pub bill_id: MaybeString,
+    #[serde(default, with = "str_opt")]
+    pub ccy: MaybeString,
+    #[serde(default, with = "str_opt")]
+    pub amt: MaybeFloat,
+    #[serde(default, with = "str_opt")]
+    pub r#type: Option<SubAccountBillType>,
+    #[serde(default, with = "str_opt")]
+    pub sub_acct: MaybeString,
+    #[serde(default, with = "str_opt")]
+    pub ts: MaybeU64,
 }
 
 impl Request for GetSubAccountBills {
@@ -444,36 +405,37 @@ impl Request for GetSubAccountBills {
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct AccountBill {
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub inst_type: InstrumentType,
-    pub bill_id: String,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub r#type: AccountBillType,
-    #[serde(deserialize_with = "crate::serde_util::deserialize_from_str")]
-    pub sub_type: AccountBillSubType,
-    #[serde(deserialize_with = "deserialize_timestamp")]
-    pub ts: DateTime<Utc>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub bal_chg: Option<Decimal>,
-    // #[serde(deserialize_with = "deserialize_from_opt_str")]
-    // pub post_bal_chg: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub bal: Option<Decimal>,
-    // #[serde(deserialize_with = "deserialize_from_opt_str")]
-    // pub post_bal: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub sz: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub ccy: Option<String>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub fee: Option<Decimal>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, with = "str_opt")]
+    pub inst_type: Option<InstrumentType>,
+    #[serde(default, with = "str_opt")]
+    pub bill_id: Option<String>,
+    #[serde(default, with = "str_opt")]
+    pub r#type: Option<AccountBillType>,
+    #[serde(default, with = "str_opt")]
+    pub sub_type: Option<AccountBillSubType>,
+    #[serde(default, with = "str_opt")]
+    pub ts: Option<u64>,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub bal_chg: MaybeFloat,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub post_bal_chg: MaybeFloat,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub bal: MaybeFloat,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub post_bal: MaybeFloat,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub sz: MaybeFloat,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub ccy: MaybeString,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub fee: MaybeFloat,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub mgn_mode: Option<MarginMode>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub inst_id: Option<String>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
-    pub ord_id: Option<String>,
-    #[serde(deserialize_with = "deserialize_from_opt_str")]
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub inst_id: MaybeString,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
+    pub ord_id: MaybeString,
+    #[serde(default, deserialize_with = "deserialize_from_opt_str")]
     pub exec_type: Option<ExecType>,
 }
 

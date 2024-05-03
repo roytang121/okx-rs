@@ -1,40 +1,8 @@
 use crate::api::v5::model::{DepositAddress, DepositHistory};
 use crate::api::v5::Request;
-use crate::impl_string_enum;
 use crate::serde_util::*;
-use chrono::{DateTime, Utc};
 use reqwest::Method;
 use serde::Serialize;
-
-#[derive(Debug, Clone)]
-pub enum DepositStatus {
-    WaitingForConfirmation,
-    DepositCredited,
-    DepositSuccessful,
-    /// pending due to temporary deposit suspension on this crypto currency
-    Pending,
-    /// match the address blacklist
-    MatchAddressBlacklist,
-    /// account or deposit is frozen
-    AccountOrDepositFrozen,
-    /// sub-account deposit interception
-    SubAccountDepositInterception,
-    /// KYC Limit
-    KycLimit,
-    Unknown(String),
-}
-
-impl_string_enum!(DepositStatus,
-    Unknown,
-    WaitingForConfirmation => "0",
-    DepositCredited => "1",
-    DepositSuccessful => "2",
-    Pending => "8",
-    MatchAddressBlacklist => "11",
-    AccountOrDepositFrozen => "12",
-    SubAccountDepositInterception => "13",
-    KycLimit => "14",
-);
 
 /// https://www.okx.com/docs-v5/en/#funding-account-rest-api-get-deposit-history
 /// ## Get deposit history
@@ -78,17 +46,11 @@ pub struct GetDepositHistory {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub state: Option<String>,
     /// Pagination of data to return records earlier than the requested ts, Unix timestamp format in milliseconds, e.g. 1654041600000
-    #[serde(
-        serialize_with = "serialize_timestamp",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub after: Option<DateTime<Utc>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub after: MaybeU64,
     /// Pagination of data to return records newer than the requested ts, Unix timestamp format in milliseconds, e.g. 1656633600000
-    #[serde(
-        serialize_with = "serialize_timestamp",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub before: Option<DateTime<Utc>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub before: MaybeU64,
     /// Number of results per request. The maximum is 100; The default is 100
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<usize>,
@@ -100,24 +62,6 @@ impl Request for GetDepositHistory {
     const AUTH: bool = true;
 
     type Response = Vec<DepositHistory>;
-}
-
-// gen test get deposit history
-#[cfg(test)]
-mod tests_get_deposit_history {
-    use super::*;
-    use crate::api::v5::testkit::with_env_private_client;
-
-    #[tokio::test]
-    #[ignore]
-    async fn test_deser() {
-        with_env_private_client(|rest| async move {
-            let req = GetDepositHistory::default();
-            let rval = rest.request(req).await.unwrap();
-            println!("{:?}", rval);
-        })
-        .await;
-    }
 }
 
 /// https://www.okx.com/docs-v5/en/#funding-account-rest-api-get-deposit-address

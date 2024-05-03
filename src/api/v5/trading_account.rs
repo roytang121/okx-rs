@@ -3,7 +3,6 @@ use crate::api::v5::model::{
     TradingBalanceDetail,
 };
 use crate::api::v5::Request;
-use crate::time::UTCDateTime;
 use crate::websocket::WebsocketChannel;
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
@@ -85,9 +84,9 @@ pub mod rest {
         #[serde(skip_serializing_if = "Option::is_none")]
         pub pos_id: Option<String>,
         #[serde(skip_serializing_if = "Option::is_none")]
-        pub after: Option<UTCDateTime>,
+        pub after: Option<u64>,
         #[serde(skip_serializing_if = "Option::is_none")]
-        pub before: Option<UTCDateTime>,
+        pub before: Option<u64>,
         #[serde(skip_serializing_if = "Option::is_none")]
         pub limit: Option<u32>,
     }

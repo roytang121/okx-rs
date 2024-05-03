@@ -21,8 +21,8 @@ impl From<Fixed> for PartialLevel {
 
 #[derive(Default)]
 pub struct OrderBook {
-    bids: BTreeMap<Reverse<Decimal>, PartialLevel>,
-    asks: BTreeMap<Decimal, PartialLevel>,
+    bids: BTreeMap<Reverse<Fixed>, PartialLevel>,
+    asks: BTreeMap<Fixed, PartialLevel>,
 }
 
 impl std::fmt::Debug for OrderBook {
