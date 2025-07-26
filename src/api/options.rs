@@ -46,7 +46,7 @@ impl OKXEnv for DemoTrading {
     }
 }
 
-pub trait OKXEnv {
+pub trait OKXEnv: Send + Sync {
     fn rest(&self) -> &str;
     fn public_websocket(&self) -> &str;
     fn private_websocket(&self) -> &str;
